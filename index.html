@@ -21,7 +21,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans">
 
-<!-- Fallback Loading Box (Disappears as soon as Vue mounts) -->
+<!-- Fallback Loading Box -->
 <div id="no-script-error" style="padding: 40px; text-align: center; font-family: sans-serif;">
     <h2 style="color: #1e1b4b; font-weight: bold; font-size: 1.25rem;">System Loading...</h2>
     <p style="color: #64748b; font-size: 0.875rem; margin-top: 8px;">If this screen stays for more than 3 seconds, click below:</p>
@@ -46,7 +46,7 @@
     <main class="p-3 lg:p-6 container mx-auto max-w-7xl">
         
         <!-- ========================================== -->
-        <!-- VIEW 1: REGISTER (SELL & IN-BOX PHOTO UPLOAD) -->
+        <!-- VIEW 1: REGISTER (SELL & FULL-PHOTO CARDS) -->
         <!-- ========================================== -->
         <div v-if="view === 'reg'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
@@ -79,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- CATEGORIES WITH BOX SIZE & DIRECT PHOTO UPLOAD -->
+                <!-- CATEGORIES WITH FULL UN-CROPPED PHOTO DISPLAY -->
                 <div v-for="(catItems, catName) in categorizedItems" :key="catName" class="space-y-2">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">{{ catName }}</p>
                     
@@ -92,17 +92,19 @@
                                 item.stocks <= 0 ? 'opacity-40 grayscale cursor-not-allowed' : ''
                             ]">
                             
-                            <!-- PHOTO UPLOAD & DISPLAY IN CARD -->
-                            <div class="relative w-full rounded-xl overflow-hidden mb-2 bg-slate-100 border border-slate-100 flex items-center justify-center"
-                                 :class="item.boxSize == 1 ? 'h-32' : (item.boxSize == 2 ? 'h-24' : 'h-20')">
-                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                            <!-- FULL PHOTO DISPLAY (object-contain with no cropping) -->
+                            <div class="relative w-full rounded-xl overflow-hidden mb-2 bg-slate-50 border border-slate-200/70 flex items-center justify-center p-1.5"
+                                 :class="item.boxSize == 1 ? 'h-48 md:h-56' : (item.boxSize == 2 ? 'h-36 md:h-44' : 'h-32 md:h-36')">
+                                
+                                <img v-if="item.image" :src="item.image" class="w-full h-full object-contain drop-shadow-sm">
+                                
                                 <div v-else class="text-slate-300 text-xs font-bold flex flex-col items-center">
-                                    <span class="text-lg">📷</span>
-                                    <span class="text-[8px] uppercase tracking-wider">No Photo</span>
+                                    <span class="text-2xl mb-1">📷</span>
+                                    <span class="text-[9px] uppercase tracking-wider">No Photo</span>
                                 </div>
                                 
                                 <!-- IN-BOX PHOTO UPLOAD BUTTON -->
-                                <label @click.stop class="absolute bottom-1 right-1 bg-black/60 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-[9px] font-bold cursor-pointer shadow-md backdrop-blur-sm transition">
+                                <label @click.stop class="absolute bottom-1.5 right-1.5 bg-slate-900/80 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-[9px] font-bold cursor-pointer shadow-md backdrop-blur-sm transition flex items-center space-x-1">
                                     <span>{{ item.image ? '📷 Edit' : '+ Photo' }}</span>
                                     <input type="file" @change="uploadImage($event, item)" class="hidden" accept="image/*">
                                 </label>
@@ -234,8 +236,8 @@
                         <tr v-for="(item, idx) in items" :key="item.id" class="hover:bg-slate-50/50">
                             <!-- Photo -->
                             <td class="p-3 w-16">
-                                <label class="cursor-pointer block relative w-10 h-10 rounded-lg overflow-hidden bg-slate-100 border flex items-center justify-center shadow-sm">
-                                    <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                                <label class="cursor-pointer block relative w-12 h-12 rounded-lg overflow-hidden bg-slate-50 border flex items-center justify-center shadow-sm p-0.5">
+                                    <img v-if="item.image" :src="item.image" class="w-full h-full object-contain">
                                     <span v-else class="text-xs text-slate-400">📷</span>
                                     <input type="file" @change="uploadImage($event, item)" class="hidden" accept="image/*">
                                 </label>
@@ -455,13 +457,13 @@ const initPOS = () => {
             price: 400, 
             desc: '3 Pairs Socks + 1 Souvenir Shirt + 1 Patch + 1 Pin + 1 Tote Bag', 
             components: [
-                { itemId: 1, qty: 1 }, // White Sock
-                { itemId: 2, qty: 1 }, // Grey Sock
-                { itemId: 3, qty: 1 }, // Black Sock
-                { itemId: 6, qty: 1 }, // Style 2 Souvenir Shirt
-                { itemId: 8, qty: 1 }, // Patch
-                { itemId: 9, qty: 1 }, // Pin
-                { itemId: 10, qty: 1 } // Bag
+                { itemId: 1, qty: 1 },
+                { itemId: 2, qty: 1 },
+                { itemId: 3, qty: 1 },
+                { itemId: 6, qty: 1 },
+                { itemId: 8, qty: 1 },
+                { itemId: 9, qty: 1 },
+                { itemId: 10, qty: 1 }
             ]
         },
         { 
@@ -470,8 +472,8 @@ const initPOS = () => {
             price: 50, 
             desc: '1 Patch + 1 Pin', 
             components: [
-                { itemId: 8, qty: 1 }, // Patch
-                { itemId: 9, qty: 1 }  // Pin
+                { itemId: 8, qty: 1 },
+                { itemId: 9, qty: 1 }
             ]
         }
     ];
@@ -480,30 +482,25 @@ const initPOS = () => {
         setup() {
             const view = ref('reg');
 
-            // Persistent data with safe fallback
-            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v9')) || [...INITIAL_ITEMS]);
-            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v9')) || []);
-            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v9')) || [...INITIAL_BUNDLES]);
+            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v10')) || [...INITIAL_ITEMS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v10')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v10')) || [...INITIAL_BUNDLES]);
 
-            // Cart & Transaction States
             const cart = ref([]);
             const discount = ref(0);
             const paymentMethod = ref('Cash');
             const customerPaid = ref(0);
             const isDonation = ref(false);
 
-            // Bundle Management States
             const editingBundleId = ref(null);
             const bundleForm = ref({ name: '', price: 0, desc: '', components: [] });
 
-            // Watch & Save to localStorage
             watch([items, sales, bundles], () => {
-                localStorage.setItem('mc_pos_items_v9', JSON.stringify(items.value));
-                localStorage.setItem('mc_pos_sales_v9', JSON.stringify(sales.value));
-                localStorage.setItem('mc_pos_bundles_v9', JSON.stringify(bundles.value));
+                localStorage.setItem('mc_pos_items_v10', JSON.stringify(items.value));
+                localStorage.setItem('mc_pos_sales_v10', JSON.stringify(sales.value));
+                localStorage.setItem('mc_pos_bundles_v10', JSON.stringify(bundles.value));
             }, { deep: true });
 
-            // Categorized Items
             const categorizedItems = computed(() => {
                 const groups = {};
                 items.value.forEach(i => {
@@ -513,12 +510,10 @@ const initPOS = () => {
                 return groups;
             });
 
-            // Cart Calculations
             const cartSubtotal = computed(() => cart.value.reduce((sum, i) => sum + (i.price * i.qty), 0));
             const cartTotal = computed(() => Math.max(0, cartSubtotal.value - (discount.value || 0)));
             const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartTotal.value));
 
-            // Balance Calculations
             const methodTotals = computed(() => {
                 const totals = { Cash: 0, Alipay: 0, PayMe: 0 };
                 sales.value.forEach(s => {
@@ -528,9 +523,7 @@ const initPOS = () => {
             });
             const totalBalance = computed(() => 500 + methodTotals.value.Cash + methodTotals.value.Alipay + methodTotals.value.PayMe);
 
-            // -----------------------------
             // CART & SALES LOGIC
-            // -----------------------------
             const addToCart = (item) => {
                 if (item.stocks <= 0) return;
                 const existing = cart.value.find(c => c.id === item.id && !c.isBundle);
@@ -568,7 +561,6 @@ const initPOS = () => {
             const completeSale = () => {
                 const snap = JSON.parse(JSON.stringify(cart.value));
                 
-                // Deduct stock for both single items and bundle components
                 snap.forEach(c => {
                     if (c.isBundle) {
                         (c.components || []).forEach(comp => {
@@ -581,7 +573,6 @@ const initPOS = () => {
                     }
                 });
 
-                // Record transaction
                 sales.value.unshift({
                     id: Date.now(),
                     time: new Date().toLocaleString(),
@@ -593,7 +584,6 @@ const initPOS = () => {
                     rawCart: snap
                 });
 
-                // Reset
                 cart.value = [];
                 discount.value = 0;
                 customerPaid.value = 0;
@@ -601,7 +591,6 @@ const initPOS = () => {
                 alert("Transaction completed successfully!");
             };
 
-            // Stock restoration upon transaction deletion
             const deleteAndReturnStock = (idx) => {
                 if (!confirm("Are you sure you want to delete this sale and restore its stock to inventory?")) return;
                 const rec = sales.value[idx];
@@ -622,9 +611,7 @@ const initPOS = () => {
                 sales.value.splice(idx, 1);
             };
 
-            // -----------------------------
-            // IMAGE UPLOAD WITH COMPRESSION
-            // -----------------------------
+            // HIGH RESOLUTION UN-CROPPED IMAGE COMPRESSION
             const uploadImage = (e, item) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -633,9 +620,8 @@ const initPOS = () => {
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        // Canvas compression to keep localStorage light
                         const canvas = document.createElement('canvas');
-                        const MAX_SIZE = 240;
+                        const MAX_SIZE = 360;
                         let width = img.width;
                         let height = img.height;
                         if (width > height) {
@@ -647,16 +633,14 @@ const initPOS = () => {
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        item.image = canvas.toDataURL('image/jpeg', 0.7);
+                        item.image = canvas.toDataURL('image/jpeg', 0.8);
                     };
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             };
 
-            // -----------------------------
             // BUNDLE MANAGEMENT
-            // -----------------------------
             const getComponentQty = (itemId) => {
                 const comp = bundleForm.value.components.find(c => c.itemId === itemId);
                 return comp ? comp.qty : 0;
@@ -705,9 +689,7 @@ const initPOS = () => {
                 bundleForm.value = { name: '', price: 0, desc: '', components: [] };
             };
 
-            // -----------------------------
             // GENERAL UTILITIES
-            // -----------------------------
             const addNewItem = () => {
                 items.value.unshift({
                     id: Date.now(),
@@ -754,7 +736,7 @@ const initPOS = () => {
         }
     }).mount('#app');
 
-    // Remove loading fallback
+    // Remove fallback screen
     document.getElementById('no-script-error').style.display = 'none';
     document.getElementById('app').style.display = 'block';
 };
