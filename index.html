@@ -33,7 +33,7 @@
     <nav class="bg-indigo-950 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <span class="text-xl">🎷</span>
-            <h1 class="font-black italic tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
+            <h1 class="font-black tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
         </div>
         <div class="flex bg-indigo-900 rounded-xl p-1 text-[10px] font-bold uppercase shadow-inner">
             <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-950 shadow' : 'text-slate-300'" class="px-3 py-2 rounded-lg transition">Register</button>
@@ -141,7 +141,7 @@
 
                     <!-- Cart Item List -->
                     <div class="flex-grow overflow-y-auto p-4 space-y-3 no-scrollbar">
-                        <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 py-12 italic">
+                        <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 py-12">
                             <span class="text-4xl mb-2">🛒</span>
                             <p class="text-xs">Cart is empty</p>
                         </div>
@@ -367,11 +367,11 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="bg-indigo-950 text-white p-5 rounded-3xl shadow-lg border border-indigo-900">
                     <p class="text-[9px] font-bold uppercase opacity-50 tracking-widest">Starting Float</p>
-                    <p class="text-2xl font-black italic">$500.00</p>
+                    <p class="text-2xl font-black">$500.00</p>
                 </div>
                 <div v-for="(val, key) in methodTotals" :key="key" class="bg-white p-5 rounded-3xl shadow border">
                     <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">{{ key }} Total</p>
-                    <p class="text-2xl font-black text-indigo-700 italic">${{ val.toFixed(2) }}</p>
+                    <p class="text-2xl font-black text-indigo-700">${{ val.toFixed(2) }}</p>
                 </div>
             </div>
 
@@ -381,7 +381,7 @@
                     <h2 class="text-lg font-black uppercase tracking-widest text-emerald-100">Total System Balance</h2>
                     <p class="text-xs opacity-75">Preset $500.00 Float + All Logged Sales</p>
                 </div>
-                <div class="text-5xl font-black tracking-tighter italic mt-4 md:mt-0">${{ totalBalance.toFixed(2) }}</div>
+                <div class="text-5xl font-black tracking-tighter mt-4 md:mt-0">${{ totalBalance.toFixed(2) }}</div>
             </div>
 
             <!-- Transaction Logs with Delete & Stock Restore -->
@@ -397,7 +397,7 @@
                     </div>
                 </div>
 
-                <div v-if="sales.length === 0" class="p-10 text-center text-slate-300 italic text-sm">No sales records logged yet.</div>
+                <div v-if="sales.length === 0" class="p-10 text-center text-slate-300 text-sm">No sales records logged yet.</div>
 
                 <div v-for="(s, idx) in sales" :key="s.id" class="p-4 border-b flex justify-between items-center hover:bg-slate-50 transition">
                     <div class="text-xs pr-2">
