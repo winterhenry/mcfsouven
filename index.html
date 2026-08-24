@@ -33,7 +33,7 @@
     <nav class="bg-indigo-950 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <span class="text-xl">🎷</span>
-            <h1 class="font-black tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
+            <h1 class="font-black italic tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
         </div>
         <div class="flex bg-indigo-900 rounded-xl p-1 text-[10px] font-bold uppercase shadow-inner">
             <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-950 shadow' : 'text-slate-300'" class="px-3 py-2 rounded-lg transition">Register</button>
@@ -141,7 +141,7 @@
 
                     <!-- Cart Item List -->
                     <div class="flex-grow overflow-y-auto p-4 space-y-3 no-scrollbar">
-                        <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 py-12">
+                        <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 py-12 italic">
                             <span class="text-4xl mb-2">🛒</span>
                             <p class="text-xs">Cart is empty</p>
                         </div>
@@ -359,28 +359,85 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- VIEW 4: BALANCE & AUDIT (CASH FLOAT + LOGS) -->
+        <!-- VIEW 4: BALANCE & AUDIT (CASH FLOAT + DONATIONS + TOTALS) -->
         <!-- ========================================== -->
         <div v-if="view === 'bal'" class="space-y-6">
             
-            <!-- Financial Summary Cards -->
+            <!-- Financial Summary Cards with Donation Breakdowns -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="bg-indigo-950 text-white p-5 rounded-3xl shadow-lg border border-indigo-900">
-                    <p class="text-[9px] font-bold uppercase opacity-50 tracking-widest">Starting Float</p>
-                    <p class="text-2xl font-black">$500.00</p>
+                <!-- Starting Cash Float -->
+                <div class="bg-indigo-950 text-white p-5 rounded-3xl shadow-lg border border-indigo-900 flex flex-col justify-between">
+                    <div>
+                        <p class="text-[9px] font-bold uppercase opacity-50 tracking-widest">Starting Float</p>
+                        <p class="text-2xl font-black italic mt-1">$500.00</p>
+                    </div>
+                    <p class="text-[9px] opacity-40 mt-3">Preset Cash Reserve</p>
                 </div>
-                <div v-for="(val, key) in methodTotals" :key="key" class="bg-white p-5 rounded-3xl shadow border">
-                    <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">{{ key }} Total</p>
-                    <p class="text-2xl font-black text-indigo-700">${{ val.toFixed(2) }}</p>
+
+                <!-- Cash Method Card -->
+                <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">Cash Total</p>
+                            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded">Incl. Donations</span>
+                        </div>
+                        <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.Cash.totalReceived.toFixed(2) }}</p>
+                    </div>
+                    <div class="text-[9px] text-slate-400 border-t pt-2 mt-2 space-y-0.5">
+                        <div class="flex justify-between"><span>Sales:</span> <span class="font-bold text-slate-600">${{ methodTotals.Cash.sales.toFixed(2) }}</span></div>
+                        <div class="flex justify-between text-emerald-600"><span>Donations:</span> <span class="font-bold">+${{ methodTotals.Cash.donations.toFixed(2) }}</span></div>
+                        <div class="flex justify-between font-black text-indigo-950 border-t pt-1"><span>Cash in Drawer:</span> <span>${{ (500 + methodTotals.Cash.totalReceived).toFixed(2) }}</span></div>
+                    </div>
+                </div>
+
+                <!-- Alipay Method Card -->
+                <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">Alipay Total</p>
+                            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded">Incl. Donations</span>
+                        </div>
+                        <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.Alipay.totalReceived.toFixed(2) }}</p>
+                    </div>
+                    <div class="text-[9px] text-slate-400 border-t pt-2 mt-2 space-y-0.5">
+                        <div class="flex justify-between"><span>Sales:</span> <span class="font-bold text-slate-600">${{ methodTotals.Alipay.sales.toFixed(2) }}</span></div>
+                        <div class="flex justify-between text-emerald-600"><span>Donations:</span> <span class="font-bold">+${{ methodTotals.Alipay.donations.toFixed(2) }}</span></div>
+                    </div>
+                </div>
+
+                <!-- PayMe Method Card -->
+                <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">PayMe Total</p>
+                            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded">Incl. Donations</span>
+                        </div>
+                        <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.PayMe.totalReceived.toFixed(2) }}</p>
+                    </div>
+                    <div class="text-[9px] text-slate-400 border-t pt-2 mt-2 space-y-0.5">
+                        <div class="flex justify-between"><span>Sales:</span> <span class="font-bold text-slate-600">${{ methodTotals.PayMe.sales.toFixed(2) }}</span></div>
+                        <div class="flex justify-between text-emerald-600"><span>Donations:</span> <span class="font-bold">+${{ methodTotals.PayMe.donations.toFixed(2) }}</span></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Grand In-Hand Balance -->
-            <div class="bg-gradient-to-r from-emerald-600 to-indigo-900 p-8 rounded-[36px] text-white shadow-xl flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-black uppercase tracking-widest text-emerald-100">Total System Balance</h2>
+            <!-- Grand In-Hand Balance & Donation Highlight -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-indigo-900 p-8 rounded-[36px] text-white shadow-xl flex flex-col sm:flex-row justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-black uppercase tracking-widest text-emerald-100">Total System Balance</h2>
+                        <p class="text-xs opacity-75 mt-1">$500 Float + All Sales + All Donations (Cash + Alipay + PayMe)</p>
+                    </div>
+                    <div class="text-5xl font-black tracking-tighter italic mt-4 sm:mt-0">${{ totalBalance.toFixed(2) }}</div>
                 </div>
-                <div class="text-5xl font-black tracking-tighter mt-4 md:mt-0">${{ totalBalance.toFixed(2) }}</div>
+
+                <div class="bg-emerald-50 border-2 border-emerald-200 p-6 rounded-[36px] flex flex-col justify-between">
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-emerald-700 tracking-widest">❤️ Total Donations Raised</p>
+                        <p class="text-3xl font-black text-emerald-600 italic mt-1">${{ totalDonationsAllMethods.toFixed(2) }}</p>
+                    </div>
+                    <p class="text-[9px] text-emerald-600/80 mt-2 font-medium">Includes direct donations & customer change across all methods</p>
+                </div>
             </div>
 
             <!-- Transaction Logs with Delete & Stock Restore -->
@@ -396,7 +453,7 @@
                     </div>
                 </div>
 
-                <div v-if="sales.length === 0" class="p-10 text-center text-slate-300 text-sm">No sales records logged yet.</div>
+                <div v-if="sales.length === 0" class="p-10 text-center text-slate-300 italic text-sm">No sales records logged yet.</div>
 
                 <div v-for="(s, idx) in sales" :key="s.id" class="p-4 border-b flex justify-between items-center hover:bg-slate-50 transition">
                     <div class="text-xs pr-2">
@@ -404,12 +461,13 @@
                         <div class="font-bold text-slate-700">{{ s.summary }}</div>
                         <div class="flex space-x-2 mt-1.5">
                             <span class="bg-slate-100 text-[9px] font-black px-2 py-0.5 rounded text-slate-600 uppercase">{{ s.method }}</span>
-                            <span v-if="s.isDonation" class="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">❤️ Donated ${{ s.change }}</span>
+                            <span v-if="s.isDonation" class="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">❤️ Donated ${{ (s.change || 0).toFixed(2) }}</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4 flex-shrink-0">
                         <div class="text-right">
-                            <div class="text-lg font-black text-indigo-950">${{ s.total }}</div>
+                            <div class="text-lg font-black text-indigo-950">${{ ((s.total || 0) + (s.isDonation ? (s.change || 0) : 0)).toFixed(2) }}</div>
+                            <div v-if="s.isDonation" class="text-[8px] text-slate-400 font-bold">Bill: ${{ (s.total || 0).toFixed(2) }} + Don: ${{ (s.change || 0).toFixed(2) }}</div>
                         </div>
                         <button @click="deleteAndReturnStock(idx)" 
                             class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white p-2.5 rounded-xl font-black text-[9px] uppercase leading-tight transition shadow-sm">
@@ -432,20 +490,20 @@ const initPOS = () => {
     // EXACT INITIAL ITEMS FROM PDF
     const INITIAL_ITEMS = [
         // SOCKS (Page 1: 300 total, 3 colors, $120/3pairs => $40/pair, Cost $14)
-        { id: 1, category: 'Socks', name: 'Socks', style: 'White', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
-        { id: 2, category: 'Socks', name: 'Socks', style: 'Grey', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
-        { id: 3, category: 'Socks', name: 'Socks', style: 'Black', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
+        { id: 1, category: 'Socks', name: 'Socks', style: 'White (100 pairs)', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
+        { id: 2, category: 'Socks', name: 'Socks', style: 'Grey (100 pairs)', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
+        { id: 3, category: 'Socks', name: 'Socks', style: 'Black (100 pairs)', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
         
         // T-SHIRTS (Page 2)
-        { id: 4, category: 'T-Shirts', name: 'Style 1 (Staff Signed)', style: 'Black', price: 300, cost: 38.3, stocks: 10, boxSize: 1, image: '' },
-        { id: 5, category: 'T-Shirts', name: 'Style 1 (For Staff)', style: 'Black', price: 150, cost: 38.3, stocks: 290, boxSize: 2, image: '' },
-        { id: 6, category: 'T-Shirts', name: 'Style 2 (Souvenir)', style: 'Black', price: 150, cost: 52.8, stocks: 200, boxSize: 2, image: '' },
-        { id: 7, category: 'T-Shirts', name: 'Style 3 (Souvenir)', style: 'Purple/Grey', price: 150, cost: 52.8, stocks: 200, boxSize: 2, image: '' },
+        { id: 4, category: 'T-Shirts', name: 'Style 1 (Staff Signed)', style: 'Black (10 pcs)', price: 300, cost: 38.3, stocks: 10, boxSize: 1, image: '' },
+        { id: 5, category: 'T-Shirts', name: 'Style 1 (For Staff)', style: 'Black (~290 pcs)', price: 150, cost: 38.3, stocks: 290, boxSize: 2, image: '' },
+        { id: 6, category: 'T-Shirts', name: 'Style 2 (Souvenir)', style: 'Black (200 pcs)', price: 150, cost: 52.8, stocks: 200, boxSize: 2, image: '' },
+        { id: 7, category: 'T-Shirts', name: 'Style 3 (Souvenir)', style: 'Purple/Grey (200 pcs)', price: 150, cost: 52.8, stocks: 200, boxSize: 2, image: '' },
         
         // MERCH (Pages 3, 4, 5)
-        { id: 8, category: 'Merchandise', name: 'Embroidered Patch', style: 'Cart/Tuba', price: 40, cost: 9.3, stocks: 300, boxSize: 3, image: '' },
-        { id: 9, category: 'Merchandise', name: 'Enamel Pin', style: 'Trombone', price: 20, cost: 11.7, stocks: 300, boxSize: 3, image: '' },
-        { id: 10, category: 'Merchandise', name: 'Tote Bag', style: 'Black Graphic', price: 120, cost: 16.3, stocks: 200, boxSize: 1, image: '' },
+        { id: 8, category: 'Merchandise', name: 'Embroidered Patch', style: 'Cart/Tuba (300 pcs)', price: 40, cost: 9.3, stocks: 300, boxSize: 3, image: '' },
+        { id: 9, category: 'Merchandise', name: 'Enamel Pin', style: 'Trombone (300 pcs)', price: 20, cost: 11.7, stocks: 300, boxSize: 3, image: '' },
+        { id: 10, category: 'Merchandise', name: 'Tote Bag', style: 'Black Graphic (200 pcs)', price: 120, cost: 16.3, stocks: 200, boxSize: 1, image: '' },
     ];
 
     // INITIAL BUNDLES (Page 6)
@@ -481,9 +539,9 @@ const initPOS = () => {
         setup() {
             const view = ref('reg');
 
-            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v10')) || [...INITIAL_ITEMS]);
-            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v10')) || []);
-            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v10')) || [...INITIAL_BUNDLES]);
+            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v11')) || [...INITIAL_ITEMS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v11')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v11')) || [...INITIAL_BUNDLES]);
 
             const cart = ref([]);
             const discount = ref(0);
@@ -495,9 +553,9 @@ const initPOS = () => {
             const bundleForm = ref({ name: '', price: 0, desc: '', components: [] });
 
             watch([items, sales, bundles], () => {
-                localStorage.setItem('mc_pos_items_v10', JSON.stringify(items.value));
-                localStorage.setItem('mc_pos_sales_v10', JSON.stringify(sales.value));
-                localStorage.setItem('mc_pos_bundles_v10', JSON.stringify(bundles.value));
+                localStorage.setItem('mc_pos_items_v11', JSON.stringify(items.value));
+                localStorage.setItem('mc_pos_sales_v11', JSON.stringify(sales.value));
+                localStorage.setItem('mc_pos_bundles_v11', JSON.stringify(bundles.value));
             }, { deep: true });
 
             const categorizedItems = computed(() => {
@@ -513,14 +571,46 @@ const initPOS = () => {
             const cartTotal = computed(() => Math.max(0, cartSubtotal.value - (discount.value || 0)));
             const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartTotal.value));
 
+            // ==========================================
+            // FINANCIAL TOTALS INCLUDING ALL DONATIONS
+            // ==========================================
             const methodTotals = computed(() => {
-                const totals = { Cash: 0, Alipay: 0, PayMe: 0 };
+                const totals = {
+                    Cash: { sales: 0, donations: 0, totalReceived: 0 },
+                    Alipay: { sales: 0, donations: 0, totalReceived: 0 },
+                    PayMe: { sales: 0, donations: 0, totalReceived: 0 }
+                };
+
                 sales.value.forEach(s => {
-                    if (totals[s.method] !== undefined) totals[s.method] += s.total;
+                    const method = s.method || 'Cash';
+                    if (totals[method]) {
+                        const saleBill = Number(s.total) || 0;
+                        const donatedChange = s.isDonation ? (Number(s.change) || 0) : 0;
+                        
+                        totals[method].sales += saleBill;
+                        totals[method].donations += donatedChange;
+                        totals[method].totalReceived += (saleBill + donatedChange);
+                    }
                 });
                 return totals;
             });
-            const totalBalance = computed(() => 500 + methodTotals.value.Cash + methodTotals.value.Alipay + methodTotals.value.PayMe);
+
+            const totalDonationsAllMethods = computed(() => {
+                return (
+                    methodTotals.value.Cash.donations +
+                    methodTotals.value.Alipay.donations +
+                    methodTotals.value.PayMe.donations
+                );
+            });
+
+            const totalBalance = computed(() => {
+                return (
+                    500 + 
+                    methodTotals.value.Cash.totalReceived + 
+                    methodTotals.value.Alipay.totalReceived + 
+                    methodTotals.value.PayMe.totalReceived
+                );
+            });
 
             // CART & SALES LOGIC
             const addToCart = (item) => {
@@ -704,13 +794,18 @@ const initPOS = () => {
             };
 
             const exportExcel = () => {
-                const data = sales.value.map(s => ({
-                    Timestamp: s.time,
-                    Items: s.summary,
-                    Method: s.method,
-                    Total: s.total,
-                    Donation: s.isDonation ? s.change : 0
-                }));
+                const data = sales.value.map(s => {
+                    const saleTotal = Number(s.total) || 0;
+                    const donationAmt = s.isDonation ? (Number(s.change) || 0) : 0;
+                    return {
+                        Timestamp: s.time,
+                        Items: s.summary,
+                        Method: s.method,
+                        Sales_Amount: saleTotal,
+                        Donation_Amount: donationAmt,
+                        Total_Received: saleTotal + donationAmt
+                    };
+                });
                 const ws = XLSX.utils.json_to_sheet(data);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Sales Records");
@@ -726,7 +821,8 @@ const initPOS = () => {
 
             return {
                 view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
-                categorizedItems, cartSubtotal, cartTotal, changeAmount, methodTotals, totalBalance,
+                categorizedItems, cartSubtotal, cartTotal, changeAmount, 
+                methodTotals, totalDonationsAllMethods, totalBalance,
                 editingBundleId, bundleForm,
                 addToCart, addBundleToCart, addDirectDonation, completeSale, deleteAndReturnStock,
                 uploadImage, getComponentQty, adjustBundleComponent, saveBundle, editBundle, resetBundleForm,
