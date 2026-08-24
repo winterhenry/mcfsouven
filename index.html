@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
     
-    <!-- Try the most reliable CDN links -->
+    <!-- Reliable CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        /* v-cloak is removed to ensure the page isn't hidden if script fails */
         .cart-sidebar { position: sticky; top: 70px; height: calc(100vh - 90px); }
         @media (max-width: 1024px) { .cart-sidebar { position: relative; top: 0; height: auto; } }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -19,169 +18,210 @@
 </head>
 <body class="bg-slate-100">
 
-<!-- If Vue fails, this message will stay visible. If Vue works, it disappears. -->
-<div id="no-script-error" style="padding: 20px; text-align: center; color: red; font-family: sans-serif;">
-    <h2>System Loading...</h2>
-    <p>If this page stays like this for more than 5 seconds, your browser is blocking the scripts. Please try a different browser or turn off your VPN/Adblocker.</p>
+<div id="no-script-error" style="padding: 40px; text-align: center; font-family: sans-serif;">
+    <h2 style="color: #312e81;">System Loading...</h2>
+    <p>If the screen stays blank, click the button below:</p>
+    <button onclick="location.reload()" style="background: #312e81; color: white; border: none; padding: 10px 20px; border-radius: 5px;">Force Reload Page</button>
 </div>
 
 <div id="app" style="display: none;">
-    <!-- HEADER -->
+    <!-- NAV -->
     <nav class="bg-indigo-900 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
-        <h1 class="font-bold tracking-tighter">MUSIC CONNECT POS</h1>
+        <h1 class="font-bold text-sm">MUSIC CONNECT</h1>
         <div class="flex bg-indigo-800 rounded-lg p-1 text-[10px] uppercase font-bold">
-            <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-900' : ''" class="px-4 py-2 rounded-md transition">Register</button>
-            <button @click="view = 'stk'" :class="view === 'stk' ? 'bg-white text-indigo-900' : ''" class="px-4 py-2 rounded-md transition">Inventory</button>
-            <button @click="view = 'rec'" :class="view === 'rec' ? 'bg-white text-indigo-900' : ''" class="px-4 py-2 rounded-md transition">Sales</button>
+            <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Register</button>
+            <button @click="view = 'stk'" :class="view === 'stk' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Stock/Bundles</button>
+            <button @click="view = 'bal'" :class="view === 'bal' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Balance/Sales</button>
         </div>
     </nav>
 
     <main class="container mx-auto p-3">
         
-        <!-- REGISTER (SELL) VIEW -->
+        <!-- REGISTER VIEW -->
         <div v-if="view === 'reg'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- PRODUCT SELECTION -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- BUNDLES -->
                 <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
-                    <h3 class="text-[10px] font-black text-amber-600 uppercase mb-3 tracking-widest">Bundle Packs</h3>
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-[10px] font-black text-amber-600 uppercase">Bundles</p>
+                        <button @click="addDirectDonation" class="bg-emerald-600 text-white px-3 py-1 rounded-full text-[10px] font-bold">❤️ Direct Donation</button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button v-for="b in bundles" @click="addBundle(b)" class="bg-white border-2 border-amber-200 p-4 rounded-xl text-left hover:border-amber-500 active:scale-95 transition">
-                            <div class="font-bold">{{ b.name }}</div>
-                            <div class="text-[10px] text-slate-400">{{ b.desc }}</div>
-                            <div class="text-xl font-black text-amber-600 mt-1">${{ b.price }}</div>
+                        <button v-for="b in bundles" @click="addBundleToCart(b)" class="bg-white border-2 border-amber-300 p-4 rounded-xl text-left shadow-sm active:scale-95 transition">
+                            <div class="font-bold text-xs">{{ b.name }}</div>
+                            <div class="text-xl font-black text-amber-600">${{ b.price }}</div>
                         </button>
                     </div>
                 </div>
 
-                <!-- CATEGORIES -->
+                <!-- CATEGORIES & ITEMS -->
                 <div v-for="(catItems, catName) in categorizedItems" :key="catName" class="space-y-2">
-                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">{{ catName }}</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">{{ catName }}</p>
+                    <div class="grid grid-cols-12 gap-2">
                         <button v-for="item in catItems" @click="addToCart(item)" :disabled="item.stocks <= 0"
-                            class="bg-white p-4 rounded-xl border border-slate-200 text-left hover:border-indigo-500 shadow-sm active:scale-95 transition"
-                            :class="item.stocks <= 0 ? 'opacity-40 grayscale' : ''">
-                            <div class="font-bold text-xs truncate">{{ item.name }}</div>
-                            <div class="text-[10px] text-slate-400">{{ item.style }}</div>
+                            class="bg-white p-3 rounded-xl border border-slate-200 text-left shadow-sm active:scale-95 transition flex flex-col justify-between"
+                            :class="[
+                                item.boxSize == 1 ? 'col-span-12' : (item.boxSize == 2 ? 'col-span-6' : 'col-span-4'),
+                                item.stocks <= 0 ? 'opacity-40 grayscale' : ''
+                            ]">
+                            <div>
+                                <div class="font-bold text-xs truncate">{{ item.name }}</div>
+                                <div class="text-[10px] text-slate-400 truncate">{{ item.style }}</div>
+                            </div>
                             <div class="mt-3 flex justify-between items-end">
-                                <div class="text-lg font-black text-indigo-600">${{ item.price }}</div>
-                                <div class="text-[9px] font-bold bg-slate-100 px-2 py-1 rounded" :class="item.stocks < 10 ? 'text-red-500' : 'text-slate-400'">STK: {{ item.stocks }}</div>
+                                <div class="font-black text-indigo-600 text-lg">${{ item.price }}</div>
+                                <div class="text-[8px] font-bold px-1 rounded bg-slate-100 uppercase">Stk: {{ item.stocks }}</div>
                             </div>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- SHOPPING CART AREA -->
+            <!-- CART SECTION -->
             <div class="lg:col-span-4">
                 <div class="cart-sidebar bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden">
-                    <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
-                        <span class="font-bold text-xs uppercase text-slate-500 tracking-tighter">Current Order</span>
-                        <button @click="cart = []" class="text-red-500 font-bold text-[10px] uppercase">Clear</button>
+                    <div class="p-4 bg-slate-50 border-b flex justify-between items-center font-bold text-[10px] uppercase text-slate-500">
+                        <span>Cart</span>
+                        <button @click="cart = []" class="text-red-500">Clear</button>
                     </div>
 
-                    <!-- Cart Item List -->
                     <div class="flex-grow overflow-y-auto p-4 space-y-3 min-h-[150px]">
-                        <div v-if="cart.length === 0" class="text-center text-slate-300 py-10 italic text-sm">Cart is empty</div>
+                        <div v-if="cart.length === 0" class="text-center text-slate-300 py-10 italic text-sm">Empty</div>
                         <div v-for="(c, idx) in cart" :key="idx" class="flex justify-between items-center border-b pb-2">
-                            <div>
-                                <div class="font-bold text-xs">{{ c.name }}</div>
-                                <div class="text-[10px] text-slate-400">{{ c.qty }} x ${{ c.price }}</div>
+                            <div class="text-xs">
+                                <div class="font-bold">{{ c.name }}</div>
+                                <div class="text-slate-400">{{ c.qty }} x ${{ c.price }}</div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="font-black text-indigo-900">${{ c.price * c.qty }}</span>
-                                <button @click="cart.splice(idx, 1)" class="text-red-300 font-bold text-lg">✕</button>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-black text-indigo-900 text-sm">${{ c.price * c.qty }}</span>
+                                <button @click="cart.splice(idx, 1)" class="text-red-200">✕</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Checkout Section -->
                     <div class="p-5 bg-indigo-50 border-t space-y-4">
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs text-slate-500"><span>Subtotal</span><span>${{ cartSubtotal }}</span></div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold">Manual Discount ($)</span>
-                                <input v-model.number="discount" type="number" class="w-16 border rounded p-1 text-right text-xs">
-                            </div>
-                            <div class="flex justify-between items-end pt-2 border-t mt-2 border-indigo-100">
-                                <span class="font-black text-indigo-900 text-sm">TOTAL</span>
-                                <span class="text-3xl font-black text-indigo-900">${{ cartTotal }}</span>
-                            </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">Discount ($)</span>
+                            <input v-model.number="discount" type="number" class="w-16 border rounded p-1 text-right">
+                        </div>
+                        <div class="flex justify-between items-end border-t pt-2 border-indigo-100">
+                            <span class="font-black text-indigo-900 text-xs uppercase tracking-widest">Total</span>
+                            <span class="text-4xl font-black text-indigo-900">${{ cartTotal }}</span>
                         </div>
 
                         <div class="grid grid-cols-3 gap-1">
                             <button v-for="m in ['Cash', 'Alipay', 'PayMe']" @click="paymentMethod = m"
                                 :class="paymentMethod === m ? 'bg-indigo-600 text-white shadow-md' : 'bg-white border text-slate-400'"
-                                class="py-2 rounded-lg text-[10px] font-black transition">{{ m }}</button>
+                                class="py-2 rounded-lg text-[9px] font-black transition">{{ m }}</button>
                         </div>
 
-                        <!-- Donation/Change Restored -->
-                        <div class="bg-white p-3 rounded-xl border border-indigo-100 shadow-inner space-y-2">
+                        <div class="bg-white p-3 rounded-xl border border-indigo-100 shadow-inner">
                             <div class="flex justify-between items-center">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">Paid Amount</label>
-                                <input v-model.number="customerPaid" type="number" class="w-24 text-right font-black text-indigo-900 border-b-2 border-indigo-200 outline-none">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Paid Amt</label>
+                                <input v-model.number="customerPaid" type="number" class="w-20 text-right font-black text-indigo-900 border-b outline-none">
                             </div>
-                            <div class="flex justify-between items-center pt-2 border-t">
+                            <div class="flex justify-between items-center pt-2 border-t mt-2">
                                 <div class="flex items-center space-x-1">
-                                    <input type="checkbox" v-model="isDonation" id="don_box">
-                                    <label for="don_box" class="text-[10px] font-bold text-slate-500 cursor-pointer uppercase tracking-tighter">Donate Change?</label>
+                                    <input type="checkbox" v-model="isDonation" id="don">
+                                    <label for="don" class="text-[9px] font-bold text-slate-500 uppercase cursor-pointer tracking-tighter">Donate Change?</label>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-xl font-black" :class="isDonation ? 'text-emerald-500' : 'text-indigo-600'">${{ changeAmount }}</div>
-                                    <div class="text-[8px] font-bold text-slate-400 uppercase leading-none">{{ isDonation ? 'Donation' : 'Change Due' }}</div>
+                                <div class="text-right leading-none">
+                                    <div class="text-lg font-black text-indigo-600">${{ changeAmount }}</div>
+                                    <div class="text-[7px] font-bold text-slate-300 uppercase">{{ isDonation ? 'Donation' : 'Change' }}</div>
                                 </div>
                             </div>
                         </div>
 
                         <button @click="completeSale" :disabled="cart.length === 0 || customerPaid < cartTotal"
-                            class="w-full py-4 rounded-xl text-white font-bold shadow-lg transition active:scale-95 disabled:bg-slate-300 bg-indigo-600">
-                            COMPLETE SALE
+                            class="w-full py-4 rounded-xl text-white font-black text-sm shadow-lg disabled:bg-slate-300 bg-indigo-600">
+                            CONFIRM PAYMENT
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- STOCK VIEW -->
-        <div v-if="view === 'stk'" class="bg-white rounded-2xl shadow border overflow-hidden">
-            <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
-                <h2 class="font-bold text-indigo-900 uppercase text-xs">Inventory Management</h2>
-                <button @click="addNewItem" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">+ Add Item</button>
+        <!-- BALANCE VIEW -->
+        <div v-if="view === 'bal'" class="space-y-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div class="bg-indigo-900 text-white p-4 rounded-xl">
+                    <p class="text-[9px] font-bold uppercase opacity-50">Starting Cash</p>
+                    <p class="text-xl font-black">$500.00</p>
+                </div>
+                <div v-for="(val, key) in methodTotals" class="bg-white p-4 rounded-xl shadow-sm border">
+                    <p class="text-[9px] font-bold uppercase text-slate-400">{{ key }} Total</p>
+                    <p class="text-xl font-black text-indigo-600">${{ val }}</p>
+                </div>
             </div>
-            <table class="w-full text-sm text-left">
-                <thead class="bg-slate-100 text-[10px] text-slate-400 uppercase">
-                    <tr><th class="p-4">Item Name</th><th class="p-4 text-center">Stock</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Delete</th></tr>
-                </thead>
-                <tbody class="divide-y">
-                    <tr v-for="(item, idx) in items" :key="item.id">
-                        <td class="p-4"><input v-model="item.name" class="font-bold w-full border-none p-0 focus:ring-0"><input v-model="item.style" class="text-[10px] text-slate-400 w-full border-none p-0"></td>
-                        <td class="p-4 text-center"><input v-model.number="item.stocks" type="number" class="w-16 border rounded text-center p-1"></td>
-                        <td class="p-4 text-right font-black text-indigo-600">$<input v-model.number="item.price" type="number" class="w-16 border-none text-right focus:ring-0"></td>
-                        <td class="p-4 text-center"><button @click="items.splice(idx,1)" class="text-red-300">✕</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
 
-        <!-- HISTORY VIEW -->
-        <div v-if="view === 'rec'" class="space-y-4">
-            <div class="flex justify-between items-center p-2">
-                <h2 class="font-bold text-xs uppercase text-slate-500">Sales Record</h2>
-                <button @click="exportExcel" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Export to Excel</button>
+            <div class="bg-emerald-600 text-white p-6 rounded-2xl shadow-lg flex justify-between items-center">
+                <h2 class="font-black text-sm uppercase">Total Balance (In-Hand)</h2>
+                <span class="text-3xl font-black tracking-tighter">${{ totalBalance }}</span>
             </div>
-            <div v-for="(s, idx) in sales" :key="s.id" class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center">
-                <div class="space-y-1">
-                    <div class="text-[9px] font-bold text-slate-300 uppercase leading-none">{{ s.time }}</div>
-                    <div class="font-bold text-xs">{{ s.summary }}</div>
-                    <div class="flex space-x-2 pt-1">
-                        <span class="bg-slate-100 text-[9px] font-black px-2 py-0.5 rounded uppercase">{{ s.method }}</span>
-                        <span v-if="s.isDonation" class="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">❤️ Donation ${{ s.change }}</span>
+
+            <div class="bg-white rounded-xl shadow border overflow-hidden">
+                <div class="p-3 bg-slate-50 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-[10px] uppercase text-slate-500">Transaction History</h3>
+                    <button @click="exportExcel" class="bg-emerald-600 text-white px-3 py-1 rounded-md text-[10px] font-bold shadow">Excel</button>
+                </div>
+                <div v-for="(s, idx) in sales" :key="s.id" class="p-3 border-b flex justify-between items-center">
+                    <div class="text-xs">
+                        <div class="text-[8px] font-bold text-slate-300 uppercase">{{ s.time }}</div>
+                        <div class="font-bold text-slate-700">{{ s.summary }}</div>
+                        <div class="flex space-x-2 mt-1">
+                            <span class="bg-slate-100 text-[8px] font-black px-1 rounded uppercase">{{ s.method }}</span>
+                            <span v-if="s.isDonation" class="text-emerald-600 text-[8px] font-black uppercase">❤️ Donated ${{ s.change }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="font-black text-indigo-900 text-sm">${{ s.total }}</div>
+                        <button @click="deleteAndReturnStock(idx)" class="bg-red-50 text-red-500 p-1 px-2 rounded font-bold text-[8px] uppercase">Del &<br>Return</button>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-right"><div class="text-lg font-black text-indigo-900">${{ s.total }}</div></div>
-                    <button @click="deleteAndReturnStock(idx)" class="bg-red-50 text-red-500 p-2 rounded text-[10px] font-bold uppercase">Delete &<br>Return Stock</button>
+            </div>
+        </div>
+
+        <!-- INVENTORY / BUNDLE VIEW -->
+        <div v-if="view === 'stk'" class="space-y-6">
+            <div class="bg-white rounded-xl shadow border overflow-hidden">
+                <div class="p-3 bg-slate-50 border-b flex justify-between items-center font-bold text-[10px] uppercase text-indigo-900">
+                    <span>Manage Inventory</span>
+                    <button @click="addNewItem" class="bg-indigo-600 text-white px-4 py-1 rounded">+ Add New Item</button>
+                </div>
+                <table class="w-full text-[10px] text-left">
+                    <thead class="bg-slate-100 text-slate-400 uppercase">
+                        <tr><th class="p-2">Name</th><th class="p-2 text-center">Stock</th><th class="p-2 text-center">Grid Size</th><th class="p-2 text-right">Price</th><th class="p-2 text-center">✕</th></tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr v-for="(item, idx) in items" :key="item.id">
+                            <td class="p-2"><input v-model="item.name" class="font-bold w-full outline-none"><input v-model="item.style" class="text-slate-400 w-full outline-none"></td>
+                            <td class="p-2 text-center"><input v-model.number="item.stocks" type="number" class="w-10 border rounded text-center"></td>
+                            <td class="p-2 text-center">
+                                <select v-model.number="item.boxSize" class="border rounded p-1">
+                                    <option value="1">1 (Full)</option><option value="2">2 (Half)</option><option value="3">3 (1/3)</option>
+                                </select>
+                            </td>
+                            <td class="p-2 text-right font-bold text-indigo-600">$<input v-model.number="item.price" type="number" class="w-10 text-right outline-none"></td>
+                            <td class="p-2 text-center"><button @click="items.splice(idx,1)" class="text-red-300 font-bold">✕</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bundle Adder -->
+            <div class="bg-white rounded-xl shadow border p-4 space-y-3">
+                <h2 class="font-bold text-[10px] uppercase text-indigo-900">Create New Bundle</h2>
+                <div class="flex gap-2">
+                    <input v-model="newBundleName" placeholder="Name" class="border p-2 rounded text-xs flex-grow">
+                    <input v-model.number="newBundlePrice" type="number" placeholder="Price" class="border p-2 rounded text-xs w-20">
+                </div>
+                <button @click="saveBundle" class="bg-indigo-600 text-white w-full py-2 rounded text-[10px] font-bold uppercase tracking-widest shadow">Save Bundle</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div v-for="(b, idx) in bundles" class="bg-slate-50 p-2 rounded flex justify-between items-center text-[10px]">
+                        <div><span class="font-bold">{{ b.name }}</span> - ${{ b.price }}</div>
+                        <button @click="bundles.splice(idx,1)" class="text-red-500 font-bold">Delete</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -190,113 +230,90 @@
 </div>
 
 <script>
-// Start the system only when script is ready
 const initPOS = () => {
-    const DEFAULT_DATA = [
-        { id: 1, category: 'Socks', name: 'Socks', style: 'White', price: 40, stocks: 100 },
-        { id: 2, category: 'Socks', name: 'Socks', style: 'Grey', price: 40, stocks: 100 },
-        { id: 3, category: 'Socks', name: 'Socks', style: 'Black', price: 40, stocks: 100 },
-        { id: 4, category: 'T-Shirts', name: 'Staff Signed', style: 'Black Style 1', price: 300, stocks: 10 },
-        { id: 5, category: 'T-Shirts', name: 'Staff Shirt', style: 'Black Style 1', price: 150, stocks: 290 },
-        { id: 6, category: 'T-Shirts', name: 'Souvenir Shirt', style: 'Black Style 2', price: 150, stocks: 200 },
-        { id: 7, category: 'T-Shirts', name: 'Souvenir Shirt', style: 'Purple Style 3', price: 150, stocks: 200 },
-        { id: 8, category: 'Merch', name: 'Embroidered Patch', style: 'Cart/Tuba', price: 40, stocks: 300 },
-        { id: 9, category: 'Merch', name: 'Enamel Pin', style: 'Trombone', price: 20, stocks: 300 },
-        { id: 10, category: 'Merch', name: 'Tote Bag', style: 'Black/Music', price: 120, stocks: 200 },
+    const { createApp, ref, computed, watch } = Vue;
+
+    const DEFAULTS = [
+        { id: 1, category: 'Socks', name: 'Socks', style: 'White', price: 40, stocks: 100, boxSize: 3 },
+        { id: 2, category: 'Socks', name: 'Socks', style: 'Grey', price: 40, stocks: 100, boxSize: 3 },
+        { id: 3, category: 'Socks', name: 'Socks', style: 'Black', price: 40, stocks: 100, boxSize: 3 },
+        { id: 4, category: 'T-Shirts', name: 'Staff Signed', style: 'Style 1', price: 300, stocks: 10, boxSize: 1 },
+        { id: 5, category: 'T-Shirts', name: 'Staff Shirt', style: 'Style 1', price: 150, stocks: 290, boxSize: 2 },
+        { id: 6, category: 'T-Shirts', name: 'Souvenir', style: 'Style 2', price: 150, stocks: 200, boxSize: 2 },
+        { id: 10, category: 'Merch', name: 'Tote Bag', style: 'Black', price: 120, stocks: 200, boxSize: 1 },
     ];
 
-    Vue.createApp({
-        data() {
-            return {
-                view: 'reg',
-                items: [],
-                sales: [],
-                cart: [],
-                discount: 0,
-                paymentMethod: 'Cash',
-                customerPaid: 0,
-                isDonation: false,
-                bundles: [
-                    { id: 'b1', name: 'Mega Package', desc: '3 Socks + Shirt + Patch + Pin + Bag', price: 400, comps: [1,2,3,6,8,9,10] },
-                    { id: 'b2', name: 'Small Bundle', desc: 'Patch + Pin', price: 50, comps: [8,9] }
-                ]
-            }
-        },
-        mounted() {
-            // Remove Error Message
-            document.getElementById('no-script-error').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
+    createApp({
+        setup() {
+            const view = ref('reg');
+            const items = ref(JSON.parse(localStorage.getItem('mc_items_final')) || [...DEFAULTS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_sales_final')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_bundles_final')) || [
+                { id: 'b1', name: 'Mega Package', price: 400, comps: [1,2,3,6,10] },
+                { id: 'b2', name: 'Small Bundle', price: 50, comps: [1,2] }
+            ]);
 
-            // Load Data
-            const savedItems = localStorage.getItem('mc_pos_items_v5');
-            const savedSales = localStorage.getItem('mc_pos_sales_v5');
-            this.items = savedItems ? JSON.parse(savedItems) : [...DEFAULT_DATA];
-            this.sales = savedSales ? JSON.parse(savedSales) : [];
-        },
-        watch: {
-            items: { handler(v) { localStorage.setItem('mc_pos_items_v5', JSON.stringify(v)) }, deep: true },
-            sales: { handler(v) { localStorage.setItem('mc_pos_sales_v5', JSON.stringify(v)) }, deep: true }
-        },
-        computed: {
-            categorizedItems() {
+            const cart = ref([]);
+            const discount = ref(0);
+            const paymentMethod = ref('Cash');
+            const customerPaid = ref(0);
+            const isDonation = ref(false);
+            const newBundleName = ref('');
+            const newBundlePrice = ref(0);
+
+            watch([items, sales, bundles], () => {
+                localStorage.setItem('mc_items_final', JSON.stringify(items.value));
+                localStorage.setItem('mc_sales_final', JSON.stringify(sales.value));
+                localStorage.setItem('mc_bundles_final', JSON.stringify(bundles.value));
+            }, { deep: true });
+
+            const categorizedItems = computed(() => {
                 const cats = {};
-                this.items.forEach(i => {
+                items.value.forEach(i => {
                     if (!cats[i.category]) cats[i.category] = [];
                     cats[i.category].push(i);
                 });
                 return cats;
-            },
-            cartSubtotal() { return this.cart.reduce((s, i) => s + (i.price * i.qty), 0); },
-            cartTotal() { return Math.max(0, this.cartSubtotal - (this.discount || 0)); },
-            changeAmount() { return Math.max(0, (this.customerPaid || 0) - this.cartTotal); }
-        },
-        methods: {
-            addToCart(item) {
-                const ex = this.cart.find(c => c.id === item.id && !c.isB);
-                if (ex) ex.qty++; else this.cart.push({ ...item, qty: 1, isB: false });
-            },
-            addBundle(b) {
-                this.cart.push({ ...b, qty: 1, isB: true });
-            },
-            completeSale() {
-                const snap = JSON.parse(JSON.stringify(this.cart));
-                snap.forEach(c => {
-                    if (c.isB) { c.comps.forEach(id => { const i = this.items.find(x => x.id === id); if(i) i.stocks--; }) }
-                    else { const i = this.items.find(x => x.id === c.id); if(i) i.stocks -= c.qty; }
-                });
-                this.sales.unshift({
-                    id: Date.now(), time: new Date().toLocaleString(),
-                    summary: this.cart.map(c => `${c.name} x${c.qty}`).join(', '),
-                    total: this.cartTotal, method: this.paymentMethod,
-                    change: this.changeAmount, isDonation: this.isDonation, rawCart: snap
-                });
-                this.cart = []; this.discount = 0; this.customerPaid = 0; this.isDonation = false;
-                alert("Sale Complete");
-            },
-            deleteAndReturnStock(idx) {
-                if(!confirm("Return items to stock?")) return;
-                const rec = this.sales[idx];
-                rec.rawCart.forEach(c => {
-                    if (c.isB) { c.comps.forEach(id => { const i = this.items.find(x => x.id === id); if(i) i.stocks++; }) }
-                    else { const i = this.items.find(x => x.id === c.id); if(i) i.stocks += c.qty; }
-                });
-                this.sales.splice(idx, 1);
-            },
-            addNewItem() { this.items.unshift({ id: Date.now(), category: 'Merch', name: 'New Item', style: '-', price: 0, stocks: 0 }); },
-            exportExcel() {
-                const ws = XLSX.utils.json_to_sheet(this.sales.map(s => ({ Time: s.time, Items: s.summary, Total: s.total, Method: s.method, Donation: s.isDonation ? s.change : 0 })));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Sales");
-                XLSX.writeFile(wb, "Music_Connect_Sales.xlsx");
-            }
-        }
-    }).mount('#app');
-};
+            });
 
-// Start attempt
-if (typeof Vue !== 'undefined') { initPOS(); } else {
-    setTimeout(() => { if (typeof Vue !== 'undefined') initPOS(); }, 2000);
-}
-</script>
-</body>
-</html>
+            const cartSubtotal = computed(() => cart.value.reduce((s, i) => s + (i.price * i.qty), 0));
+            const cartTotal = computed(() => Math.max(0, cartSubtotal.value - (discount.value || 0)));
+            const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartTotal.value));
+
+            const methodTotals = computed(() => {
+                const res = { Cash: 0, Alipay: 0, PayMe: 0 };
+                sales.value.forEach(s => { if(res[s.method] !== undefined) res[s.method] += s.total; });
+                return res;
+            });
+            const totalBalance = computed(() => 500 + methodTotals.value.Cash + methodTotals.value.Alipay + methodTotals.value.PayMe);
+
+            const addToCart = (i) => {
+                const ex = cart.value.find(c => c.id === i.id && !c.isB);
+                if (ex) ex.qty++; else cart.value.push({ ...i, qty: 1, isB: false });
+            };
+            const addBundleToCart = (b) => cart.value.push({ ...b, qty: 1, isB: true });
+            const addDirectDonation = () => {
+                const amt = prompt("Donation Amount ($):");
+                if (amt) cart.value.push({ id: Date.now(), name: 'Direct Donation', price: parseFloat(amt), qty: 1, isB: false });
+            };
+
+            const completeSale = () => {
+                const snap = JSON.parse(JSON.stringify(cart.value));
+                snap.forEach(c => {
+                    if (c.isB) { c.comps?.forEach(id => { const i = items.value.find(x => x.id === id); if(i) i.stocks--; }) }
+                    else { const i = items.value.find(x => x.id === c.id); if(i) i.stocks -= c.qty; }
+                });
+                sales.value.unshift({
+                    id: Date.now(), time: new Date().toLocaleString(),
+                    summary: cart.value.map(c => `${c.name} x${c.qty}`).join(', '),
+                    total: cartTotal.value, method: paymentMethod.value,
+                    change: changeAmount.value, isDonation: isDonation.value, rawCart: snap
+                });
+                cart.value = []; discount.value = 0; customerPaid.value = 0; isDonation.value = false;
+                alert("Payment Success!");
+            };
+
+            const deleteAndReturnStock = (idx) => {
+                const rec = sales.value[idx];
+                if (rec.rawCart) {
+                    rec.rawCart.forEach(c => {
