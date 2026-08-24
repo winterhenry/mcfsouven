@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Cashier POS</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div id="app" v-cloak class="min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-xl font-bold">POS System</h1>
+        <div class="space-x-4">
+            <button @click="view = 'register'" :class="view === 'register' ? 'underline font-bold' : ''">Register</button>
+            <button @click="view = 'inventory'" :class="view === 'inventory' ? 'underline font-bold' : ''">Inventory</button>
+            <button @click="view = 'records'" :class="view === 'records' ? 'underline font-bold' : ''">Sales Records</button>
+        </div>
+    </nav>
+
+    <main class="p-4 flex-grow container mx-auto">
+
+        <!-- VIEW: INVENTORY (Add Items) -->
+        <section v-if="view === 'inventory'" class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-bold mb-4">Add New Item</h2>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <input v-model="newItem.name" placeholder="Item Name" class="border p-2 rounded">
+                    <input v-model="newItem.size" placeholder="Size (e.g. S, M, L)" class="border p-2 rounded">
+                    <input v-model="newItem.style" placeholder="Style (e.g. Red, Cotton)" class="border p-2 rounded">
+                    <input v-model.number="newItem.price" type="number" placeholder="Price" class="border p-2 rounded">
+                    <input v-model.number="newItem.stocks" type="number" placeholder="Stock Qty" class="border p-2 rounded">
+                </div>
+                <button @click="addItem" class="mt-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 w-full md:w-auto">Add to Inventory</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <h2 class="text-lg font-bold mb-4">Current Stock</h2>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-2 border">Item</th>
+                            <th class="p-2 border">Size</th>
+                            <th class="p-2 border">Style</th>
+                            <th class="p-2 border">Price</th>
+                            <th class="p-2 border">Stock</th>
+                            <th class="p-2 border">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in items" :key="index">
+                            <td class="p-2 border">{{ item.name }}</td>
+                            <td class="p-2 border">{{ item.size }}</td>
+                            <td class="p-2 border">{{ item.style }}</td>
+                            <td class="p-2 border">${{ item.price }}</td>
+                            <td class="p-2 border" :class="item.stocks < 5 ? 'text-red-500 font-bold' : ''">{{ item.stocks }}</td>
+                            <td class="p-2 border">
+                                <button @click="removeItem(index)" class="text-red-500">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW: REGISTER (Sell Items) -->
+        <section v-if="view === 'register'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Item Selection -->
+            <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-bold mb-4">Select Items</h2>
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="item in items" :key="item.id" 
+                         @click="addToCart(item)"
+                         class="border p-4 rounded cursor-pointer hover:bg-blue-50 transition"
+                         :class="item.stocks <= 0 ? 'opacity-50 cursor-not-allowed bg-gray-200' : ''">
+                        <div class="font-bold">{{ item.name }}</div>
+                        <div class="text-sm text-gray-500">{{ item.size }} | {{ item.style }}</div>
+                        <div class="text-blue-600 font-bold mt-2">${{ item.price }}</div>
+                        <div class="text-xs mt-1">Stock: {{ item.stocks }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout Panel -->
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
+                <h2 class="text-lg font-bold mb-4">Current Order</h2>
+                <div class="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                    <div v-for="(cartItem, idx) in cart" :key="idx" class="flex justify-between items-center text-sm border-b pb-1">
+                        <span>{{ cartItem.name }} ({{ cartItem.size }}) x {{ cartItem.qty }}</span>
+                        <span>${{ cartItem.price * cartItem.qty }}</span>
+                        <button @click="removeFromCart(idx)" class="text-red-500 ml-2">×</button>
+                    </div>
+                </div>
+
+                <div class="border-t pt-4 space-y-3">
+                    <div class="flex justify-between"><span>Subtotal:</span> <span>${{ cartSubtotal }}</span></div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm">Discount ($):</label>
+                        <input v-model.number="discount" type="number" class="border p-1 w-20 text-right rounded">
+                    </div>
+
+                    <div class="flex justify-between text-xl font-bold text-blue-700">
+                        <span>Total:</span> <span>${{ cartTotal }}</span>
+                    </div>
+
+                    <hr>
+
+                    <div>
+                        <label class="block text-sm mb-1">Payment Method:</label>
+                        <select v-model="paymentMethod" class="w-full border p-2 rounded">
+                            <option value="Cash">Cash</option>
+                            <option value="Alipay">Alipay</option>
+                            <option value="PayMe">PayMe</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Customer Paid:</label>
+                        <input v-model.number="customerPaid" type="number" class="w-full border p-2 rounded text-lg" placeholder="0.00">
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" v-model="isDonation" id="donate">
+                        <label for="donate" class="text-sm">Donate Change?</label>
+                    </div>
+
+                    <div v-if="customerPaid > 0" class="bg-gray-50 p-2 rounded text-center">
+                        <div v-if="!isDonation" class="text-sm font-bold">Change: ${{ changeAmount }}</div>
+                        <div v-else class="text-sm font-bold text-green-600">Donation: ${{ changeAmount }}</div>
+                    </div>
+
+                    <button @click="completeSale" 
+                            :disabled="cart.length === 0 || customerPaid < cartTotal"
+                            class="w-full py-3 rounded text-white font-bold transition"
+                            :class="cart.length === 0 || customerPaid < cartTotal ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'">
+                        Complete Sale
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: RECORDS -->
+        <section v-if="view === 'records'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Sales History</h2>
+                <button @click="exportToExcel" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export All to Excel</button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-3 border">Time</th>
+                            <th class="p-3 border">Items Sold</th>
+                            <th class="p-3 border">Method</th>
+                            <th class="p-3 border">Total Paid</th>
+                            <th class="p-3 border">Discount</th>
+                            <th class="p-3 border">Change/Donation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="sale in sales" :key="sale.id" class="hover:bg-gray-50">
+                            <td class="p-3 border text-xs">{{ sale.time }}</td>
+                            <td class="p-3 border">{{ sale.itemSummary }}</td>
+                            <td class="p-3 border">{{ sale.method }}</td>
+                            <td class="p-3 border font-bold">${{ sale.finalTotal }}</td>
+                            <td class="p-3 border text-red-500">-${{ sale.discount }}</td>
+                            <td class="p-3 border">
+                                {{ sale.isDonation ? 'Donated' : 'Change' }}: ${{ sale.change }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const { createApp, ref, computed, watch, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const view = ref('register');
+            const items = ref(JSON.parse(localStorage.getItem('pos_items')) || []);
+            const sales = ref(JSON.parse(localStorage.getItem('pos_sales')) || []);
+
+            // New Item Model
+            const newItem = ref({ name: '', size: '', style: '', price: 0, stocks: 0 });
+
+            // Cart Logic
+            const cart = ref([]);
+            const discount = ref(0);
+            const paymentMethod = ref('Cash');
+            const customerPaid = ref(0);
+            const isDonation = ref(false);
+
+            // Persist data
+            watch([items, sales], () => {
+                localStorage.setItem('pos_items', JSON.stringify(items.value));
+                localStorage.setItem('pos_sales', JSON.stringify(sales.value));
+            }, { deep: true });
+
+            const addItem = () => {
+                if (!newItem.value.name || newItem.value.price <= 0) return alert('Enter valid item details');
+                items.value.push({ ...newItem.value, id: Date.now() });
+                newItem.value = { name: '', size: '', style: '', price: 0, stocks: 0 };
+            };
+
+            const removeItem = (index) => {
+                if(confirm('Delete this item?')) items.value.splice(index, 1);
+            };
+
+            const addToCart = (item) => {
+                if (item.stocks <= 0) return;
+                const existing = cart.value.find(c => c.id === item.id);
+                if (existing) {
+                    if (existing.qty < item.stocks) existing.qty++;
+                } else {
+                    cart.value.push({ ...item, qty: 1 });
+                }
+            };
+
+            const removeFromCart = (index) => cart.value.splice(index, 1);
+
+            const cartSubtotal = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.qty), 0));
+            const cartTotal = computed(() => Math.max(0, cartSubtotal.value - discount.value));
+            const changeAmount = computed(() => {
+                const diff = customerPaid.value - cartTotal.value;
+                return diff > 0 ? diff : 0;
+            });
+
+            const completeSale = () => {
+                // Update Stocks
+                cart.value.forEach(cartItem => {
+                    const inventoryItem = items.value.find(i => i.id === cartItem.id);
+                    if (inventoryItem) inventoryItem.stocks -= cartItem.qty;
+                });
+
+                // Create Record
+                const record = {
+                    id: Date.now(),
+                    time: new Date().toLocaleString(),
+                    itemSummary: cart.value.map(i => `${i.name} (${i.qty})`).join(", "),
+                    method: paymentMethod.value,
+                    subtotal: cartSubtotal.value,
+                    discount: discount.value,
+                    finalTotal: cartTotal.value,
+                    paid: customerPaid.value,
+                    change: changeAmount.value,
+                    isDonation: isDonation.value
+                };
+
+                sales.value.unshift(record);
+                
+                // Reset
+                cart.value = [];
+                discount.value = 0;
+                customerPaid.value = 0;
+                isDonation.value = false;
+                alert("Sale Completed!");
+            };
+
+            const exportToExcel = () => {
+                const ws = XLSX.utils.json_to_sheet(sales.value);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "SalesRecords");
+                XLSX.writeFile(wb, "Sales_Record_Export.xlsx");
+            };
+
+            return {
+                view, items, sales, newItem, cart, discount, 
+                paymentMethod, customerPaid, isDonation,
+                addItem, removeItem, addToCart, removeFromCart,
+                cartSubtotal, cartTotal, changeAmount, completeSale, exportToExcel
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
