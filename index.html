@@ -3,65 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Cashier POS</title>
+    <title>Music Connect POS</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        [v-cloak] { display: none; }
-    </style>
+    <style>[v-cloak] { display: none; }</style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-slate-50 font-sans text-slate-900">
 
 <div id="app" v-cloak class="min-h-screen flex flex-col">
-    <!-- Navigation -->
-    <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-xl font-bold">POS System</h1>
-        <div class="space-x-4">
-            <button @click="view = 'register'" :class="view === 'register' ? 'underline font-bold' : ''">Register</button>
-            <button @click="view = 'inventory'" :class="view === 'inventory' ? 'underline font-bold' : ''">Inventory</button>
-            <button @click="view = 'records'" :class="view === 'records' ? 'underline font-bold' : ''">Sales Records</button>
+    <!-- Header -->
+    <nav class="bg-indigo-900 text-white p-4 shadow-md flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🎷</span>
+            <h1 class="text-xl font-bold tracking-tight">Music Connect Cashier</h1>
+        </div>
+        <div class="flex bg-indigo-800 rounded-lg p-1">
+            <button @click="view = 'register'" :class="view === 'register' ? 'bg-white text-indigo-900' : 'text-white'" class="px-4 py-1 rounded-md text-sm font-medium transition">Register</button>
+            <button @click="view = 'inventory'" :class="view === 'inventory' ? 'bg-white text-indigo-900' : 'text-white'" class="px-4 py-1 rounded-md text-sm font-medium transition">Stock</button>
+            <button @click="view = 'records'" :class="view === 'records' ? 'bg-white text-indigo-900' : 'text-white'" class="px-4 py-1 rounded-md text-sm font-medium transition">Sales</button>
         </div>
     </nav>
 
     <main class="p-4 flex-grow container mx-auto">
-
-        <!-- VIEW: INVENTORY (Add Items) -->
-        <section v-if="view === 'inventory'" class="space-y-6">
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-lg font-bold mb-4">Add New Item</h2>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <input v-model="newItem.name" placeholder="Item Name" class="border p-2 rounded">
-                    <input v-model="newItem.size" placeholder="Size (e.g. S, M, L)" class="border p-2 rounded">
-                    <input v-model="newItem.style" placeholder="Style (e.g. Red, Cotton)" class="border p-2 rounded">
-                    <input v-model.number="newItem.price" type="number" placeholder="Price" class="border p-2 rounded">
-                    <input v-model.number="newItem.stocks" type="number" placeholder="Stock Qty" class="border p-2 rounded">
+        
+        <!-- REGISTER VIEW -->
+        <section v-if="view === 'register'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left: Product Selection -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Bundles Section -->
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
+                    <h2 class="text-yellow-800 font-bold mb-3 flex items-center">✨ Special Bundles</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button v-for="b in bundles" @click="addBundleToCart(b)" class="bg-white border-2 border-yellow-400 p-3 rounded-lg hover:shadow-md transition text-left">
+                            <div class="font-bold">{{ b.name }}</div>
+                            <div class="text-xs text-gray-500">{{ b.desc }}</div>
+                            <div class="text-lg font-black text-yellow-600">${{ b.price }}</div>
+                        </button>
+                    </div>
                 </div>
-                <button @click="addItem" class="mt-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 w-full md:w-auto">Add to Inventory</button>
+
+                <!-- Regular Items -->
+                <div v-for="(catItems, catName) in categorizedItems" :key="catName">
+                    <h3 class="font-bold text-slate-500 mb-2 uppercase text-xs tracking-widest">{{ catName }}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <button v-for="item in catItems" 
+                             @click="addToCart(item)"
+                             :disabled="item.stocks <= 0"
+                             class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm hover:border-indigo-500 text-left transition relative overflow-hidden"
+                             :class="item.stocks <= 0 ? 'opacity-50 grayscale bg-slate-100' : ''">
+                            <div class="font-bold text-sm">{{ item.name }}</div>
+                            <div class="text-xs text-slate-400">{{ item.style }} | {{ item.size }}</div>
+                            <div class="mt-2 font-bold text-indigo-600">${{ item.price }}</div>
+                            <div class="text-[10px] mt-1" :class="item.stocks < 10 ? 'text-red-500 font-bold' : 'text-slate-400'">Stock: {{ item.stocks }}</div>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-                <h2 class="text-lg font-bold mb-4">Current Stock</h2>
-                <table class="w-full text-left border-collapse">
+            <!-- Right: Checkout -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 sticky top-4">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
+                        <h2 class="font-bold">Current Order</h2>
+                    </div>
+                    
+                    <div class="p-4 max-h-[40vh] overflow-y-auto">
+                        <div v-if="cart.length === 0" class="text-center py-10 text-slate-400 italic">Cart is empty</div>
+                        <div v-for="(c, idx) in cart" :key="idx" class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
+                            <div>
+                                <div class="font-bold text-sm">{{ c.name }}</div>
+                                <div class="text-xs text-slate-500">Qty: {{ c.qty }} @ ${{ c.price }}</div>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="font-bold">${{ c.price * c.qty }}</span>
+                                <button @click="removeFromCart(idx)" class="text-red-400 text-xs hover:underline">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 space-y-3 rounded-b-2xl">
+                        <div class="flex justify-between text-sm"><span>Subtotal:</span><span>${{ cartSubtotal }}</span></div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span>Discount ($):</span>
+                            <input v-model.number="discount" type="number" class="w-20 border rounded p-1 text-right">
+                        </div>
+                        <div class="flex justify-between text-xl font-black text-indigo-900 pt-2 border-t">
+                            <span>TOTAL:</span><span>${{ cartTotal }}</span>
+                        </div>
+
+                        <div class="pt-4 space-y-2">
+                            <label class="text-[10px] font-bold uppercase text-slate-400">Payment Method</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button v-for="m in ['Cash', 'Alipay', 'PayMe']" @click="paymentMethod = m"
+                                    :class="paymentMethod === m ? 'bg-indigo-600 text-white' : 'bg-white border'"
+                                    class="py-2 rounded-lg text-xs font-bold transition">{{ m }}</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-slate-400">Customer Paid</label>
+                            <input v-model.number="customerPaid" type="number" class="w-full text-2xl font-bold border rounded-lg p-2 mt-1">
+                        </div>
+
+                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border">
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" v-model="isDonation" id="don">
+                                <label for="don" class="text-sm cursor-pointer">Donate Change?</label>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-400">{{ isDonation ? 'Donation' : 'Change' }}</div>
+                                <div class="font-bold text-indigo-600">${{ changeAmount }}</div>
+                            </div>
+                        </div>
+
+                        <button @click="completeSale" 
+                            :disabled="cart.length === 0 || customerPaid < cartTotal"
+                            class="w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition"
+                            :class="cart.length === 0 || customerPaid < cartTotal ? 'bg-slate-300' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'">
+                            Complete Sale
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STOCK VIEW -->
+        <section v-if="view === 'inventory'" class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-xl font-bold mb-6">Inventory Management</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-gray-100">
-                            <th class="p-2 border">Item</th>
-                            <th class="p-2 border">Size</th>
-                            <th class="p-2 border">Style</th>
-                            <th class="p-2 border">Price</th>
-                            <th class="p-2 border">Stock</th>
-                            <th class="p-2 border">Action</th>
+                        <tr class="border-b bg-slate-50 text-xs font-bold uppercase text-slate-500">
+                            <th class="p-3">Item Name</th>
+                            <th class="p-3">Style/Color</th>
+                            <th class="p-3">Cost</th>
+                            <th class="p-3">Price</th>
+                            <th class="p-3">Stock Count</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in items" :key="index">
-                            <td class="p-2 border">{{ item.name }}</td>
-                            <td class="p-2 border">{{ item.size }}</td>
-                            <td class="p-2 border">{{ item.style }}</td>
-                            <td class="p-2 border">${{ item.price }}</td>
-                            <td class="p-2 border" :class="item.stocks < 5 ? 'text-red-500 font-bold' : ''">{{ item.stocks }}</td>
-                            <td class="p-2 border">
-                                <button @click="removeItem(index)" class="text-red-500">Delete</button>
+                        <tr v-for="item in items" :key="item.id" class="border-b hover:bg-slate-50">
+                            <td class="p-3 font-medium">{{ item.name }}</td>
+                            <td class="p-3 text-slate-500 text-sm">{{ item.style }}</td>
+                            <td class="p-3 text-sm">${{ item.cost }}</td>
+                            <td class="p-3 font-bold">${{ item.price }}</td>
+                            <td class="p-3">
+                                <input type="number" v-model.number="item.stocks" class="w-20 border rounded p-1">
                             </td>
                         </tr>
                     </tbody>
@@ -69,110 +157,35 @@
             </div>
         </section>
 
-        <!-- VIEW: REGISTER (Sell Items) -->
-        <section v-if="view === 'register'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Item Selection -->
-            <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-lg font-bold mb-4">Select Items</h2>
-                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div v-for="item in items" :key="item.id" 
-                         @click="addToCart(item)"
-                         class="border p-4 rounded cursor-pointer hover:bg-blue-50 transition"
-                         :class="item.stocks <= 0 ? 'opacity-50 cursor-not-allowed bg-gray-200' : ''">
-                        <div class="font-bold">{{ item.name }}</div>
-                        <div class="text-sm text-gray-500">{{ item.size }} | {{ item.style }}</div>
-                        <div class="text-blue-600 font-bold mt-2">${{ item.price }}</div>
-                        <div class="text-xs mt-1">Stock: {{ item.stocks }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Checkout Panel -->
-            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
-                <h2 class="text-lg font-bold mb-4">Current Order</h2>
-                <div class="space-y-2 mb-4 max-h-64 overflow-y-auto">
-                    <div v-for="(cartItem, idx) in cart" :key="idx" class="flex justify-between items-center text-sm border-b pb-1">
-                        <span>{{ cartItem.name }} ({{ cartItem.size }}) x {{ cartItem.qty }}</span>
-                        <span>${{ cartItem.price * cartItem.qty }}</span>
-                        <button @click="removeFromCart(idx)" class="text-red-500 ml-2">×</button>
-                    </div>
-                </div>
-
-                <div class="border-t pt-4 space-y-3">
-                    <div class="flex justify-between"><span>Subtotal:</span> <span>${{ cartSubtotal }}</span></div>
-                    
-                    <div class="flex items-center justify-between">
-                        <label class="text-sm">Discount ($):</label>
-                        <input v-model.number="discount" type="number" class="border p-1 w-20 text-right rounded">
-                    </div>
-
-                    <div class="flex justify-between text-xl font-bold text-blue-700">
-                        <span>Total:</span> <span>${{ cartTotal }}</span>
-                    </div>
-
-                    <hr>
-
-                    <div>
-                        <label class="block text-sm mb-1">Payment Method:</label>
-                        <select v-model="paymentMethod" class="w-full border p-2 rounded">
-                            <option value="Cash">Cash</option>
-                            <option value="Alipay">Alipay</option>
-                            <option value="PayMe">PayMe</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm mb-1">Customer Paid:</label>
-                        <input v-model.number="customerPaid" type="number" class="w-full border p-2 rounded text-lg" placeholder="0.00">
-                    </div>
-
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" v-model="isDonation" id="donate">
-                        <label for="donate" class="text-sm">Donate Change?</label>
-                    </div>
-
-                    <div v-if="customerPaid > 0" class="bg-gray-50 p-2 rounded text-center">
-                        <div v-if="!isDonation" class="text-sm font-bold">Change: ${{ changeAmount }}</div>
-                        <div v-else class="text-sm font-bold text-green-600">Donation: ${{ changeAmount }}</div>
-                    </div>
-
-                    <button @click="completeSale" 
-                            :disabled="cart.length === 0 || customerPaid < cartTotal"
-                            class="w-full py-3 rounded text-white font-bold transition"
-                            :class="cart.length === 0 || customerPaid < cartTotal ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'">
-                        Complete Sale
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW: RECORDS -->
+        <!-- RECORDS VIEW -->
         <section v-if="view === 'records'" class="space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-bold">Sales History</h2>
-                <button @click="exportToExcel" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export All to Excel</button>
+                <button @click="exportToExcel" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-emerald-700 shadow flex items-center space-x-2">
+                    <span>📊</span> <span>Export to Excel</span>
+                </button>
             </div>
-            <div class="bg-white rounded-lg shadow overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-100">
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-800 text-white">
                         <tr>
-                            <th class="p-3 border">Time</th>
-                            <th class="p-3 border">Items Sold</th>
-                            <th class="p-3 border">Method</th>
-                            <th class="p-3 border">Total Paid</th>
-                            <th class="p-3 border">Discount</th>
-                            <th class="p-3 border">Change/Donation</th>
+                            <th class="p-3">Time</th>
+                            <th class="p-3">Items</th>
+                            <th class="p-3 text-center">Method</th>
+                            <th class="p-3 text-right">Total</th>
+                            <th class="p-3 text-right">Change/Donation</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="sale in sales" :key="sale.id" class="hover:bg-gray-50">
-                            <td class="p-3 border text-xs">{{ sale.time }}</td>
-                            <td class="p-3 border">{{ sale.itemSummary }}</td>
-                            <td class="p-3 border">{{ sale.method }}</td>
-                            <td class="p-3 border font-bold">${{ sale.finalTotal }}</td>
-                            <td class="p-3 border text-red-500">-${{ sale.discount }}</td>
-                            <td class="p-3 border">
-                                {{ sale.isDonation ? 'Donated' : 'Change' }}: ${{ sale.change }}
+                        <tr v-for="sale in sales" :key="sale.id" class="border-b hover:bg-slate-50">
+                            <td class="p-3 text-xs text-slate-500">{{ sale.time }}</td>
+                            <td class="p-3 font-medium">{{ sale.itemSummary }}</td>
+                            <td class="p-3 text-center"><span class="px-2 py-1 bg-slate-100 rounded-full text-[10px] font-bold">{{ sale.method }}</span></td>
+                            <td class="p-3 text-right font-bold text-indigo-600">${{ sale.finalTotal }}</td>
+                            <td class="p-3 text-right">
+                                <span :class="sale.isDonation ? 'text-emerald-600' : 'text-slate-400'">
+                                    {{ sale.isDonation ? '❤️' : '' }} ${{ sale.change }}
+                                </span>
                             </td>
                         </tr>
                     </tbody>
@@ -183,105 +196,160 @@
 </div>
 
 <script>
-    const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch } = Vue;
 
-    createApp({
-        setup() {
-            const view = ref('register');
-            const items = ref(JSON.parse(localStorage.getItem('pos_items')) || []);
-            const sales = ref(JSON.parse(localStorage.getItem('pos_sales')) || []);
+createApp({
+    setup() {
+        const view = ref('register');
+        
+        // INITIAL DATA FROM YOUR PDF IMAGES
+        const defaultItems = [
+            // SOCKS
+            { id: 1, category: 'Socks', name: 'Socks', style: 'White', size: 'Pair', price: 40, cost: 14, stocks: 100 },
+            { id: 2, category: 'Socks', name: 'Socks', style: 'Grey', size: 'Pair', price: 40, cost: 14, stocks: 100 },
+            { id: 3, category: 'Socks', name: 'Socks', style: 'Black', size: 'Pair', price: 40, cost: 14, stocks: 100 },
+            // T-SHIRTS
+            { id: 4, category: 'T-Shirts', name: 'Style 1 (Staff Signed)', style: 'Black', size: 'L', price: 300, cost: 38.3, stocks: 10 },
+            { id: 5, category: 'T-Shirts', name: 'Style 1 (Staff)', style: 'Black', size: 'L', price: 150, cost: 38.3, stocks: 290 },
+            { id: 6, category: 'T-Shirts', name: 'Style 2 (Souvenir)', style: 'Black', size: 'L', price: 150, cost: 52.8, stocks: 200 },
+            { id: 7, category: 'T-Shirts', name: 'Style 3 (Souvenir)', style: 'Purple/Grey', size: 'L', price: 150, cost: 52.8, stocks: 200 },
+            // ACCESSORIES
+            { id: 8, category: 'Merch', name: 'Embroidered Patch', style: 'Cart/Tuba', size: '1pcs', price: 40, cost: 9.3, stocks: 300 },
+            { id: 9, category: 'Merch', name: 'Enamel Pin', style: 'Trombone', size: '1pcs', price: 20, cost: 11.7, stocks: 300 },
+            { id: 10, category: 'Merch', name: 'Tote Bag', style: 'Black/Music', size: '1pcs', price: 120, cost: 16.3, stocks: 200 },
+        ];
 
-            // New Item Model
-            const newItem = ref({ name: '', size: '', style: '', price: 0, stocks: 0 });
+        // Special Bundle Definitions
+        const bundles = [
+            { 
+                id: 'b1', 
+                name: 'Mega Package', 
+                desc: '3 Socks + 1 Shirt + Patch + Pin + Bag', 
+                price: 400, 
+                orig: 450,
+                components: [
+                    { id: 1, qty: 1 }, { id: 2, qty: 1 }, { id: 3, qty: 1 }, // 3 pairs socks
+                    { id: 6, qty: 1 }, // Souvenir shirt
+                    { id: 8, qty: 1 }, { id: 9, qty: 1 }, { id: 10, qty: 1 } // Patch, Pin, Bag
+                ]
+            },
+            { 
+                id: 'b2', 
+                name: 'Small Bundle', 
+                desc: 'Patch + Pin', 
+                price: 50, 
+                orig: 60,
+                components: [ { id: 8, qty: 1 }, { id: 9, qty: 1 } ]
+            }
+        ];
 
-            // Cart Logic
-            const cart = ref([]);
-            const discount = ref(0);
-            const paymentMethod = ref('Cash');
-            const customerPaid = ref(0);
-            const isDonation = ref(false);
+        const items = ref(JSON.parse(localStorage.getItem('mc_items')) || defaultItems);
+        const sales = ref(JSON.parse(localStorage.getItem('mc_sales')) || []);
 
-            // Persist data
-            watch([items, sales], () => {
-                localStorage.setItem('pos_items', JSON.stringify(items.value));
-                localStorage.setItem('pos_sales', JSON.stringify(sales.value));
-            }, { deep: true });
+        const cart = ref([]);
+        const discount = ref(0);
+        const paymentMethod = ref('Cash');
+        const customerPaid = ref(0);
+        const isDonation = ref(false);
 
-            const addItem = () => {
-                if (!newItem.value.name || newItem.value.price <= 0) return alert('Enter valid item details');
-                items.value.push({ ...newItem.value, id: Date.now() });
-                newItem.value = { name: '', size: '', style: '', price: 0, stocks: 0 };
-            };
+        // Computed
+        const categorizedItems = computed(() => {
+            return items.value.reduce((acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
+                acc[item.category].push(item);
+                return acc;
+            }, {});
+        });
 
-            const removeItem = (index) => {
-                if(confirm('Delete this item?')) items.value.splice(index, 1);
-            };
+        const cartSubtotal = computed(() => cart.value.reduce((sum, i) => sum + (i.price * i.qty), 0));
+        const cartTotal = computed(() => Math.max(0, cartSubtotal.value - discount.value));
+        const changeAmount = computed(() => Math.max(0, customerPaid.value - cartTotal.value));
 
-            const addToCart = (item) => {
-                if (item.stocks <= 0) return;
-                const existing = cart.value.find(c => c.id === item.id);
-                if (existing) {
-                    if (existing.qty < item.stocks) existing.qty++;
-                } else {
-                    cart.value.push({ ...item, qty: 1 });
-                }
-            };
+        // Persistence
+        watch([items, sales], () => {
+            localStorage.setItem('mc_items', JSON.stringify(items.value));
+            localStorage.setItem('mc_sales', JSON.stringify(sales.value));
+        }, { deep: true });
 
-            const removeFromCart = (index) => cart.value.splice(index, 1);
+        // Logic
+        const addToCart = (item) => {
+            const existing = cart.value.find(c => c.id === item.id && !c.isBundle);
+            if (existing) {
+                if (existing.qty < item.stocks) existing.qty++;
+            } else {
+                cart.value.push({ ...item, qty: 1, isBundle: false });
+            }
+        };
 
-            const cartSubtotal = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.qty), 0));
-            const cartTotal = computed(() => Math.max(0, cartSubtotal.value - discount.value));
-            const changeAmount = computed(() => {
-                const diff = customerPaid.value - cartTotal.value;
-                return diff > 0 ? diff : 0;
+        const addBundleToCart = (bundle) => {
+            // Check if all components have stock
+            const canSell = bundle.components.every(comp => {
+                const item = items.value.find(i => i.id === comp.id);
+                return item.stocks >= comp.qty;
             });
 
-            const completeSale = () => {
-                // Update Stocks
-                cart.value.forEach(cartItem => {
-                    const inventoryItem = items.value.find(i => i.id === cartItem.id);
-                    if (inventoryItem) inventoryItem.stocks -= cartItem.qty;
-                });
+            if (!canSell) return alert("Not enough stock for this bundle!");
+            
+            cart.value.push({
+                id: bundle.id,
+                name: bundle.name,
+                price: bundle.price,
+                qty: 1,
+                isBundle: true,
+                components: bundle.components
+            });
+        };
 
-                // Create Record
-                const record = {
-                    id: Date.now(),
-                    time: new Date().toLocaleString(),
-                    itemSummary: cart.value.map(i => `${i.name} (${i.qty})`).join(", "),
-                    method: paymentMethod.value,
-                    subtotal: cartSubtotal.value,
-                    discount: discount.value,
-                    finalTotal: cartTotal.value,
-                    paid: customerPaid.value,
-                    change: changeAmount.value,
-                    isDonation: isDonation.value
-                };
+        const removeFromCart = (idx) => cart.value.splice(idx, 1);
 
-                sales.value.unshift(record);
-                
-                // Reset
-                cart.value = [];
-                discount.value = 0;
-                customerPaid.value = 0;
-                isDonation.value = false;
-                alert("Sale Completed!");
+        const completeSale = () => {
+            // Update Stocks (handle normal items and bundles)
+            cart.value.forEach(cartItem => {
+                if (cartItem.isBundle) {
+                    cartItem.components.forEach(comp => {
+                        const invItem = items.value.find(i => i.id === comp.id);
+                        if (invItem) invItem.stocks -= comp.qty;
+                    });
+                } else {
+                    const invItem = items.value.find(i => i.id === cartItem.id);
+                    if (invItem) invItem.stocks -= cartItem.qty;
+                }
+            });
+
+            const record = {
+                id: Date.now(),
+                time: new Date().toLocaleString(),
+                itemSummary: cart.value.map(i => `${i.name} x${i.qty}`).join(", "),
+                method: paymentMethod.value,
+                finalTotal: cartTotal.value,
+                change: changeAmount.value,
+                isDonation: isDonation.value
             };
 
-            const exportToExcel = () => {
-                const ws = XLSX.utils.json_to_sheet(sales.value);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "SalesRecords");
-                XLSX.writeFile(wb, "Sales_Record_Export.xlsx");
-            };
+            sales.value.unshift(record);
+            
+            // Reset UI
+            cart.value = [];
+            discount.value = 0;
+            customerPaid.value = 0;
+            isDonation.value = false;
+            alert("Payment Successful!");
+        };
 
-            return {
-                view, items, sales, newItem, cart, discount, 
-                paymentMethod, customerPaid, isDonation,
-                addItem, removeItem, addToCart, removeFromCart,
-                cartSubtotal, cartTotal, changeAmount, completeSale, exportToExcel
-            };
-        }
-    }).mount('#app');
+        const exportToExcel = () => {
+            const ws = XLSX.utils.json_to_sheet(sales.value);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Sales");
+            XLSX.writeFile(wb, `Sales_Report_${new Date().toLocaleDateString()}.xlsx`);
+        };
+
+        return {
+            view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
+            categorizedItems, cartSubtotal, cartTotal, changeAmount,
+            addToCart, addBundleToCart, removeFromCart, completeSale, exportToExcel
+        };
+    }
+}).mount('#app');
 </script>
 
 </body>
