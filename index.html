@@ -17,6 +17,38 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 60-Column Master Grid (LCM of 1, 2, 3, 4, 5) */
+        .grid-master-60 {
+            display: grid;
+            grid-template-columns: repeat(60, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        /* Desktop Column Spans */
+        .span-size-1 { grid-column: span 60 / span 60; } /* 1 per row (60/1) */
+        .span-size-2 { grid-column: span 30 / span 30; } /* 2 per row (60/2) */
+        .span-size-3 { grid-column: span 20 / span 20; } /* 3 per row (60/3) */
+        .span-size-4 { grid-column: span 15 / span 15; } /* 4 per row (60/4) */
+        .span-size-5 { grid-column: span 12 / span 12; } /* 5 per row (60/5) */
+
+        /* Tablet Responsive Scaling */
+        @media (max-width: 1024px) and (min-width: 641px) {
+            .span-size-1 { grid-column: span 60 / span 60; }
+            .span-size-2 { grid-column: span 30 / span 30; }
+            .span-size-3 { grid-column: span 20 / span 20; }
+            .span-size-4 { grid-column: span 30 / span 30; }
+            .span-size-5 { grid-column: span 20 / span 20; }
+        }
+
+        /* Mobile Screen Scaling */
+        @media (max-width: 640px) {
+            .span-size-1 { grid-column: span 60 / span 60; }
+            .span-size-2 { grid-column: span 30 / span 30; }
+            .span-size-3 { grid-column: span 30 / span 30; }
+            .span-size-4 { grid-column: span 30 / span 30; }
+            .span-size-5 { grid-column: span 30 / span 30; }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans">
@@ -46,7 +78,7 @@
     <main class="p-3 lg:p-6 container mx-auto max-w-7xl">
         
         <!-- ========================================== -->
-        <!-- VIEW 1: REGISTER (SELL & FULL-PHOTO CARDS) -->
+        <!-- VIEW 1: REGISTER (SELL & FULL PHOTO CARDS) -->
         <!-- ========================================== -->
         <div v-if="view === 'reg'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
@@ -79,32 +111,32 @@
                     </div>
                 </div>
 
-                <!-- CATEGORIES WITH FULL UN-CROPPED PHOTO DISPLAY -->
+                <!-- CATEGORIES WITH SIZE 1 TO 5 & FULL UN-CROPPED PHOTOS -->
                 <div v-for="(catItems, catName) in categorizedItems" :key="catName" class="space-y-2">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">{{ catName }}</p>
                     
-                    <div class="grid grid-cols-12 gap-3">
+                    <div class="grid-master-60">
                         <div v-for="item in catItems" :key="item.id"
                             @click="addToCart(item)"
-                            class="bg-white p-3 rounded-2xl border border-slate-200 text-left shadow-sm hover:border-indigo-500 hover:shadow-md transition-all active:scale-95 flex flex-col justify-between cursor-pointer relative group overflow-hidden"
+                            class="bg-white p-2.5 rounded-2xl border border-slate-200 text-left shadow-sm hover:border-indigo-500 hover:shadow-md transition-all active:scale-95 flex flex-col justify-between cursor-pointer relative group overflow-hidden"
                             :class="[
-                                item.boxSize == 1 ? 'col-span-12' : (item.boxSize == 2 ? 'col-span-6' : 'col-span-4'),
+                                getBoxSpanClass(item.boxSize),
                                 item.stocks <= 0 ? 'opacity-40 grayscale cursor-not-allowed' : ''
                             ]">
                             
                             <!-- FULL PHOTO DISPLAY (object-contain with no cropping) -->
-                            <div class="relative w-full rounded-xl overflow-hidden mb-2 bg-slate-50 border border-slate-200/70 flex items-center justify-center p-1.5"
-                                 :class="item.boxSize == 1 ? 'h-48 md:h-56' : (item.boxSize == 2 ? 'h-36 md:h-44' : 'h-32 md:h-36')">
+                            <div class="relative w-full rounded-xl overflow-hidden mb-2 bg-slate-50 border border-slate-200/70 flex items-center justify-center p-1"
+                                 :class="getImageHeightClass(item.boxSize)">
                                 
                                 <img v-if="item.image" :src="item.image" class="w-full h-full object-contain drop-shadow-sm">
                                 
                                 <div v-else class="text-slate-300 text-xs font-bold flex flex-col items-center">
-                                    <span class="text-2xl mb-1">📷</span>
-                                    <span class="text-[9px] uppercase tracking-wider">No Photo</span>
+                                    <span class="text-xl mb-0.5">📷</span>
+                                    <span class="text-[8px] uppercase tracking-wider">No Photo</span>
                                 </div>
                                 
                                 <!-- IN-BOX PHOTO UPLOAD BUTTON -->
-                                <label @click.stop class="absolute bottom-1.5 right-1.5 bg-slate-900/80 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-[9px] font-bold cursor-pointer shadow-md backdrop-blur-sm transition flex items-center space-x-1">
+                                <label @click.stop class="absolute bottom-1 right-1 bg-slate-900/80 hover:bg-indigo-600 text-white rounded-md px-1.5 py-0.5 text-[8px] font-bold cursor-pointer shadow-md backdrop-blur-sm transition flex items-center space-x-0.5">
                                     <span>{{ item.image ? '📷 Edit' : '+ Photo' }}</span>
                                     <input type="file" @change="uploadImage($event, item)" class="hidden" accept="image/*">
                                 </label>
@@ -113,12 +145,12 @@
                             <!-- ITEM DETAILS -->
                             <div>
                                 <div class="font-bold text-xs text-slate-800 truncate leading-tight">{{ item.name }}</div>
-                                <div class="text-[10px] text-slate-400 truncate">{{ item.style }}</div>
+                                <div class="text-[9px] text-slate-400 truncate">{{ item.style }}</div>
                             </div>
 
                             <!-- PRICE & STOCK -->
                             <div class="mt-2 flex justify-between items-end border-t pt-1.5 border-slate-100">
-                                <div class="text-lg font-black text-indigo-600 leading-none">${{ item.price }}</div>
+                                <div class="text-base md:text-lg font-black text-indigo-600 leading-none">${{ item.price }}</div>
                                 <div class="text-[8px] font-black px-1.5 py-0.5 rounded-full"
                                      :class="item.stocks < 10 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'">
                                     STK: {{ item.stocks }}
@@ -214,13 +246,13 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- VIEW 2: INVENTORY (EDIT ITEMS & BOX SIZES) -->
+        <!-- VIEW 2: INVENTORY (SIZES 1 TO 5 SUPPORT) -->
         <!-- ========================================== -->
         <div v-if="view === 'stk'" class="bg-white rounded-3xl shadow-xl border overflow-hidden">
             <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                 <div>
                     <h2 class="font-black text-indigo-950 uppercase text-xs tracking-widest">Inventory Management</h2>
-                    <p class="text-[10px] text-slate-400">Configure item names, prices, costs, stock levels, and grid sizes.</p>
+                    <p class="text-[10px] text-slate-400">Configure item names, prices, costs, stock levels, and grid sizes (1 to 5).</p>
                 </div>
                 <button @click="addNewItem" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-indigo-700 transition">+ New Item</button>
             </div>
@@ -233,7 +265,7 @@
                             <th class="p-3">Item Name & Style</th>
                             <th class="p-3">Category</th>
                             <th class="p-3 text-center">In-Stock</th>
-                            <th class="p-3 text-center">Box Size</th>
+                            <th class="p-3 text-center">Box Size (1-5)</th>
                             <th class="p-3 text-right">Cost ($)</th>
                             <th class="p-3 text-right">Price ($)</th>
                             <th class="p-3 text-center">Delete</th>
@@ -262,12 +294,14 @@
                             <td class="p-3 text-center">
                                 <input v-model.number="item.stocks" type="number" class="w-16 border rounded p-1 text-center font-bold">
                             </td>
-                            <!-- Box Size (1 = Full, 2 = 1/2, 3 = 1/3) -->
+                            <!-- Box Size (1 to 5) -->
                             <td class="p-3 text-center">
                                 <select v-model.number="item.boxSize" class="border rounded p-1 text-[10px] font-bold bg-white">
-                                    <option value="1">Size 1 (Full)</option>
-                                    <option value="2">Size 2 (1/2)</option>
-                                    <option value="3">Size 3 (1/3)</option>
+                                    <option value="1">Size 1 (Full - 1/row)</option>
+                                    <option value="2">Size 2 (Half - 2/row)</option>
+                                    <option value="3">Size 3 (1/3rd - 3/row)</option>
+                                    <option value="4">Size 4 (1/4th - 4/row)</option>
+                                    <option value="5">Size 5 (1/5th - 5/row)</option>
                                 </select>
                             </td>
                             <!-- Cost -->
@@ -562,9 +596,9 @@ const initPOS = () => {
         setup() {
             const view = ref('reg');
 
-            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v12')) || [...INITIAL_ITEMS]);
-            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v12')) || []);
-            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v12')) || [...INITIAL_BUNDLES]);
+            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v13')) || [...INITIAL_ITEMS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v13')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v13')) || [...INITIAL_BUNDLES]);
 
             const cart = ref([]);
             const discount = ref(0);
@@ -576,9 +610,9 @@ const initPOS = () => {
             const bundleForm = ref({ name: '', price: 0, desc: '', components: [] });
 
             watch([items, sales, bundles], () => {
-                localStorage.setItem('mc_pos_items_v12', JSON.stringify(items.value));
-                localStorage.setItem('mc_pos_sales_v12', JSON.stringify(sales.value));
-                localStorage.setItem('mc_pos_bundles_v12', JSON.stringify(bundles.value));
+                localStorage.setItem('mc_pos_items_v13', JSON.stringify(items.value));
+                localStorage.setItem('mc_pos_sales_v13', JSON.stringify(sales.value));
+                localStorage.setItem('mc_pos_bundles_v13', JSON.stringify(bundles.value));
             }, { deep: true });
 
             const categorizedItems = computed(() => {
@@ -590,13 +624,33 @@ const initPOS = () => {
                 return groups;
             });
 
+            // Grid Span Class Helper (Sizes 1 to 5)
+            const getBoxSpanClass = (boxSize) => {
+                const size = Number(boxSize) || 3;
+                if (size === 1) return 'span-size-1';
+                if (size === 2) return 'span-size-2';
+                if (size === 3) return 'span-size-3';
+                if (size === 4) return 'span-size-4';
+                if (size === 5) return 'span-size-5';
+                return 'span-size-3';
+            };
+
+            // Image Container Height Helper for Proportions
+            const getImageHeightClass = (boxSize) => {
+                const size = Number(boxSize) || 3;
+                if (size === 1) return 'h-48 md:h-56';
+                if (size === 2) return 'h-36 md:h-44';
+                if (size === 3) return 'h-32 md:h-36';
+                if (size === 4) return 'h-28 md:h-32';
+                if (size === 5) return 'h-24 md:h-28';
+                return 'h-32 md:h-36';
+            };
+
             const cartSubtotal = computed(() => cart.value.reduce((sum, i) => sum + (i.price * i.qty), 0));
             const cartTotal = computed(() => Math.max(0, cartSubtotal.value - (discount.value || 0)));
             const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartTotal.value));
 
-            // ============================================================
             // FINANCIAL CALCULATIONS (WITH COMPLETE DONATION AUDIT)
-            // ============================================================
             const methodTotals = computed(() => {
                 const totals = {
                     Cash: { sales: 0, donations: 0, totalReceived: 0 },
@@ -689,7 +743,6 @@ const initPOS = () => {
                     }
                 });
 
-                // Calculate direct donation sum vs regular product sales
                 const directDonationSum = snap
                     .filter(c => c.isDirectDonation)
                     .reduce((sum, c) => sum + (c.price * c.qty), 0);
@@ -862,6 +915,7 @@ const initPOS = () => {
                 categorizedItems, cartSubtotal, cartTotal, changeAmount, 
                 methodTotals, grandTotalDonations, totalBalance,
                 editingBundleId, bundleForm,
+                getBoxSpanClass, getImageHeightClass,
                 addToCart, addBundleToCart, addDirectDonation, completeSale, deleteAndReturnStock,
                 uploadImage, getComponentQty, adjustBundleComponent, saveBundle, editBundle, resetBundleForm,
                 addNewItem, exportExcel, resetData
