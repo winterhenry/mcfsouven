@@ -317,3 +317,42 @@ const initPOS = () => {
                 const rec = sales.value[idx];
                 if (rec.rawCart) {
                     rec.rawCart.forEach(c => {
+                        if (c.isB) { c.comps?.forEach(id => { const i = items.value.find(x => x.id === id); if(i) i.stocks++; }) }
+                        else { const i = items.value.find(x => x.id === c.id); if(i) i.stocks += c.qty; }
+                    });
+                }
+                sales.value.splice(idx, 1);
+            };
+
+            const addNewItem = () => items.value.unshift({ id: Date.now(), category: 'Merch', name: 'New Item', style: '-', price: 0, stocks: 0, boxSize: 3 });
+            const saveBundle = () => {
+                if (newBundleName.value) {
+                    bundles.value.push({ id: Date.now(), name: newBundleName.value, price: newBundlePrice.value });
+                    newBundleName.value = ''; newBundlePrice.value = 0;
+                }
+            };
+            const exportExcel = () => {
+                const ws = XLSX.utils.json_to_sheet(sales.value);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sales");
+                XLSX.writeFile(wb, "POS_Sales.xlsx");
+            };
+
+            return {
+                view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
+                newBundleName, newBundlePrice, categorizedItems, cartTotal, changeAmount,
+                methodTotals, totalBalance, addToCart, addBundleToCart, addDirectDonation, 
+                completeSale, deleteAndReturnStock, addNewItem, saveBundle, exportExcel
+            };
+        }
+    }).mount('#app');
+    
+    document.getElementById('no-script-error').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+};
+
+if (typeof Vue !== 'undefined') initPOS();
+else setTimeout(() => { if (typeof Vue !== 'undefined') initPOS(); }, 2000);
+</script>
+</body>
+</html>
