@@ -368,9 +368,11 @@
                 </div>
 
                 <!-- ========================================== -->
-                <!-- VIEW 4: BALANCE & AUDIT -->
+                <!-- VIEW 4: BALANCE & AUDIT (CLEAN REDESIGN) -->
                 <!-- ========================================== -->
                 <div v-if="view === 'bal'" class="space-y-6">
+                    
+                    <!-- Row 1: Payment Method Inflows -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="bg-indigo-950 text-white p-5 rounded-3xl shadow-lg border border-indigo-900 flex flex-col justify-between">
                             <div>
@@ -408,23 +410,60 @@
                         </div>
                     </div>
 
+                    <!-- Row 2: Clean Non-Overlapping Summary Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-indigo-900 p-8 rounded-[36px] text-white shadow-xl flex flex-col sm:flex-row justify-between items-center">
+                        
+                        <!-- CARD 1: Total System Balance (Vertically Stacked to Prevent Text Collisions) -->
+                        <div class="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-xl flex flex-col justify-between border border-indigo-800/50">
                             <div>
-                                <h2 class="text-lg font-black uppercase tracking-widest text-emerald-100">Total System Balance</h2>
-                                <p class="text-xs opacity-75 mt-1">$500.00 Float + All Sales + All Donated Funds</p>
+                                <div class="flex items-center space-x-1.5 text-indigo-300">
+                                    <span class="text-sm">💎</span>
+                                    <p class="text-[10px] font-black uppercase tracking-widest">Total System Balance</p>
+                                </div>
+                                <div class="text-3xl lg:text-4xl font-black text-emerald-400 tracking-tight mt-3">
+                                    ${{ totalBalance.toFixed(2) }}
+                                </div>
                             </div>
-                            <div class="text-5xl font-black tracking-tighter italic mt-4 sm:mt-0">${{ totalBalance.toFixed(2) }}</div>
+                            <p class="text-[10px] text-slate-400 mt-4 pt-2.5 border-t border-indigo-800/60 font-medium">
+                                $500.00 Float + All Sales + All Donated Funds
+                            </p>
                         </div>
-                        <div class="bg-emerald-50 border-2 border-emerald-300 p-6 rounded-[36px] shadow-sm flex flex-col justify-between">
+
+                        <!-- CARD 2: Grand Donation Total -->
+                        <div class="bg-emerald-50 border-2 border-emerald-300 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
                             <div>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-800">❤️ Grand Donation Total</p>
-                                <p class="text-4xl font-black text-emerald-600 italic mt-2">${{ grandTotalDonations.toFixed(2) }}</p>
+                                <div class="flex items-center space-x-1.5 text-emerald-800">
+                                    <span class="text-sm">❤️</span>
+                                    <p class="text-[10px] font-black uppercase tracking-widest">Grand Donation Total</p>
+                                </div>
+                                <div class="text-3xl lg:text-4xl font-black text-emerald-600 tracking-tight mt-3">
+                                    ${{ grandTotalDonations.toFixed(2) }}
+                                </div>
                             </div>
-                            <p class="text-[9px] text-emerald-700 font-medium">All Direct & Change Donations</p>
+                            <p class="text-[10px] text-emerald-700/80 mt-4 pt-2.5 border-t border-emerald-200 font-medium">
+                                All Direct & Customer Change Donations
+                            </p>
                         </div>
+
+                        <!-- CARD 3: Total Discounts Applied -->
+                        <div class="bg-amber-50 border-2 border-amber-300 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center space-x-1.5 text-amber-900">
+                                    <span class="text-sm">🏷️</span>
+                                    <p class="text-[10px] font-black uppercase tracking-widest">Total Discounts Applied</p>
+                                </div>
+                                <div class="text-3xl lg:text-4xl font-black text-amber-600 tracking-tight mt-3">
+                                    ${{ grandTotalDiscounts.toFixed(2) }}
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-amber-700/80 mt-4 pt-2.5 border-t border-amber-200 font-medium">
+                                All Auto-Bundle & Manual Discounts
+                            </p>
+                        </div>
+
                     </div>
 
+                    <!-- Row 3: Transaction History -->
                     <div class="bg-white rounded-3xl shadow border overflow-hidden">
                         <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
                             <div>
@@ -441,10 +480,13 @@
                             <div class="text-xs pr-2">
                                 <div class="text-[8px] font-bold text-slate-300 uppercase mb-0.5">{{ s.time }}</div>
                                 <div class="font-bold text-slate-700">{{ s.summary }}</div>
-                                <div class="flex space-x-2 mt-1.5">
+                                <div class="flex flex-wrap gap-1.5 mt-1.5 items-center">
                                     <span class="bg-slate-100 text-[9px] font-black px-2 py-0.5 rounded text-slate-600 uppercase">{{ s.method }}</span>
                                     <span v-if="s.totalDonation > 0" class="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">
                                         ❤️ Donation: ${{ s.totalDonation.toFixed(2) }}
+                                    </span>
+                                    <span v-if="(s.totalDiscount || s.discount) > 0" class="bg-amber-50 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase border border-amber-200">
+                                        🏷️ Discount: -${{ (s.totalDiscount !== undefined ? s.totalDiscount : (s.discount || 0)).toFixed(2) }}
                                     </span>
                                 </div>
                             </div>
@@ -728,9 +770,9 @@ const initPOS = () => {
         setup() {
             const view = ref('reg');
 
-            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v31')) || [...INITIAL_ITEMS]);
-            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v31')) || []);
-            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v31')) || [...INITIAL_BUNDLES]);
+            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v33')) || [...INITIAL_ITEMS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v33')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v33')) || [...INITIAL_BUNDLES]);
 
             const cart = ref([]);
             const discount = ref(0);
@@ -749,9 +791,9 @@ const initPOS = () => {
             });
 
             watch([items, sales, bundles], () => {
-                localStorage.setItem('mc_pos_items_v31', JSON.stringify(items.value));
-                localStorage.setItem('mc_pos_sales_v31', JSON.stringify(sales.value));
-                localStorage.setItem('mc_pos_bundles_v31', JSON.stringify(bundles.value));
+                localStorage.setItem('mc_pos_items_v33', JSON.stringify(items.value));
+                localStorage.setItem('mc_pos_sales_v33', JSON.stringify(sales.value));
+                localStorage.setItem('mc_pos_bundles_v33', JSON.stringify(bundles.value));
             }, { deep: true });
 
             const categorizedItems = computed(() => {
@@ -800,7 +842,6 @@ const initPOS = () => {
             // DYNAMIC GREEDY AUTO BUNDLE MATCHING (EXACT CONSUMPTION, NO OVERLAP)
             // =========================================================================
             const autoBundleMatches = computed(() => {
-                // 1. Build accurate available pool of loose items in cart (Counted ONCE)
                 let poolSocks = 0;
                 let poolShirts = 0;
                 const poolItems = {}; // { itemId: count }
@@ -811,12 +852,9 @@ const initPOS = () => {
                         const cat = (c.category || '').toLowerCase();
                         const name = (c.name || '').toLowerCase();
                         
-                        // Count Socks
                         if (cat.includes('sock') || name.includes('sock')) {
                             poolSocks += qty;
-                        }
-                        // Count Eligible $150 Shirts (EXCLUDE $300 Signed Shirt / ID: 4)
-                        else if (
+                        } else if (
                             (cat.includes('shirt') || cat.includes('t-shirt') || name.includes('shirt') || name.includes('style')) &&
                             c.id !== 4 &&
                             !name.includes('signed') &&
@@ -825,12 +863,10 @@ const initPOS = () => {
                             poolShirts += qty;
                         }
 
-                        // Always record item count accurately by ID (Counted strictly once)
                         poolItems[c.id] = (poolItems[c.id] || 0) + qty;
                     }
                 });
 
-                // 2. Evaluate all active bundles and calculate exact dollar savings
                 const bundleSavingsList = bundles.value.map(b => {
                     const socksVal = (Number(b.requiresSocks) || 0) * 40;
                     const shirtsVal = (Number(b.requiresShirt) || 0) * 150;
@@ -851,12 +887,10 @@ const initPOS = () => {
                     };
                 });
 
-                // Sort bundles strictly by LARGEST savings first (e.g. Mega Package $50 before Small Bundle $10)
                 bundleSavingsList.sort((a, b) => b.savings - a.savings);
 
                 const matches = [];
 
-                // 3. Greedily match bundles in order of largest savings and consume items
                 bundleSavingsList.forEach(item => {
                     if (item.savings <= 0) return;
                     const b = item.bundle;
@@ -882,7 +916,6 @@ const initPOS = () => {
                             savings: maxCount * item.savings
                         });
 
-                        // Consume items so they cannot be reused for other bundles
                         if (b.requiresSocks > 0) poolSocks -= maxCount * b.requiresSocks;
                         if (b.requiresShirt > 0) poolShirts -= maxCount * b.requiresShirt;
                         if (b.components && b.components.length > 0) {
@@ -928,6 +961,14 @@ const initPOS = () => {
             });
 
             const grandTotalDonations = computed(() => methodTotals.value.Cash.donations + methodTotals.value.Alipay.donations + methodTotals.value.PayMe.donations);
+            
+            // TOTAL DISCOUNTS APPLIED COMPUTATION
+            const grandTotalDiscounts = computed(() => {
+                return sales.value.reduce((sum, s) => {
+                    return sum + (Number(s.totalDiscount !== undefined ? s.totalDiscount : (s.discount || 0)) || 0);
+                }, 0);
+            });
+
             const totalBalance = computed(() => 500 + methodTotals.value.Cash.totalReceived + methodTotals.value.Alipay.totalReceived + methodTotals.value.PayMe.totalReceived);
 
             // CART ACTIONS
@@ -1056,6 +1097,9 @@ const initPOS = () => {
                 const productSalesOnly = Math.max(0, billTotal - directDonationSum);
                 const totalMoneyReceived = billTotal + changeDonationAmt;
 
+                // Total discount = auto bundle discount + manual discount
+                const totalDiscountForSale = Number(autoBundleSavingsTotal.value || 0) + (Number(discount.value) || 0);
+
                 sales.value.unshift({
                     id: Date.now(),
                     time: new Date().toLocaleString(),
@@ -1065,6 +1109,7 @@ const initPOS = () => {
                     totalDonation: totalDonationForSale,
                     changeDonation: changeDonationAmt,
                     totalReceived: totalMoneyReceived,
+                    totalDiscount: totalDiscountForSale,
                     method: paymentMethod.value,
                     change: changeAmount.value,
                     isDonation: isDonation.value,
@@ -1210,6 +1255,7 @@ const initPOS = () => {
                     Items: s.summary,
                     Method: s.method,
                     Product_Sales_Amount: (s.productSales !== undefined ? s.productSales : s.total),
+                    Discount_Applied: (s.totalDiscount !== undefined ? s.totalDiscount : (s.discount || 0)),
                     Donation_Amount: (s.totalDonation !== undefined ? s.totalDonation : (s.isDonation ? s.change : 0)),
                     Total_Received: (s.totalReceived !== undefined ? s.totalReceived : (s.total + (s.isDonation ? s.change : 0)))
                 }));
@@ -1230,7 +1276,7 @@ const initPOS = () => {
                 view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
                 categorizedItems, nonClothingItems, cartRawSubtotal, cartFinalTotal, changeAmount, 
                 autoBundleMatches, autoBundleSavingsTotal, getItemName,
-                methodTotals, grandTotalDonations, totalBalance,
+                methodTotals, grandTotalDonations, grandTotalDiscounts, totalBalance,
                 editingBundleId, bundleForm, customizingBundle, bundleOptions,
                 getBoxSpanClass, getImageHeightClass,
                 addToCart, increaseCartQty, decreaseCartQty, addDirectDonation,
