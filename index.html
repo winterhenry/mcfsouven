@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
     
-    <!-- Exact Working CDNs -->
+    <!-- Working Stable CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -32,11 +32,11 @@
 </head>
 <body class="bg-slate-100">
 
-<!-- Fallback message that disappears immediately when Vue starts -->
-<div id="no-script-error" style="padding: 20px; text-align: center; color: #1e1b4b; font-family: sans-serif;">
-    <h2>System Loading...</h2>
-    <p>Please wait a moment...</p>
-    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 10px; background: #312e81; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Cache & Reload</button>
+<!-- Loading fallback that unhides immediately when Vue mounts -->
+<div id="no-script-error" style="padding: 30px; text-align: center; color: #1e1b4b; font-family: sans-serif;">
+    <h2 style="font-weight: 900; font-size: 1.25rem;">System Loading...</h2>
+    <p style="color: #64748b; font-size: 0.875rem; margin-top: 6px;">Please wait a moment...</p>
+    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 12px; background: #312e81; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;">Clear Cache & Reload</button>
 </div>
 
 <div id="app" style="display: none;">
@@ -277,5 +277,4 @@
                             <div>
                                 <h2 class="text-lg font-bold uppercase tracking-widest text-emerald-100">Total System Balance</h2>
                                 <p class="text-xs opacity-75 mt-1">$500 Float + All Sales + All Donated Funds</p>
-                            </div>
-                            <div class="text-5xl font-black tracking-tighter italic mt-4 sm:mt-0">${
+                            <
