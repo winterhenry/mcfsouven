@@ -91,7 +91,7 @@
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
                             <span class="text-xs font-black uppercase text-indigo-950 tracking-wider">Product Catalog</span>
-                            <p class="text-[10px] text-slate-400">Selecting matching items will automatically trigger bundle pricing.</p>
+                            <p class="text-[10px] text-slate-400">Selecting matching items will automatically trigger highest discount bundle pricing ($300 Signed Shirts excluded).</p>
                         </div>
                         <button @click="addDirectDonation" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition flex items-center space-x-1">
                             <span>❤️</span> <span>Donate Only</span>
@@ -101,7 +101,7 @@
                     <!-- Auto-Bundle Match Alert (If Active) -->
                     <div v-if="autoBundleMatches.length > 0" class="bg-amber-50 border-2 border-amber-300 p-3.5 rounded-2xl shadow-sm">
                         <div class="flex items-center space-x-1.5 text-amber-900 text-xs font-black uppercase tracking-wider mb-1">
-                            <span>✨</span> <span>Auto Bundle Match Applied!</span>
+                            <span>✨</span> <span>Auto Bundle Discount Applied!</span>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <span v-for="(m, i) in autoBundleMatches" :key="i" class="bg-white border border-amber-300 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xs">
@@ -265,30 +265,74 @@
                         </div>
                     </div>
 
-                    <!-- Bundle Creator & Editor Card -->
-                    <div class="bg-white p-6 rounded-3xl shadow border">
-                        <div class="flex justify-between items-center mb-4">
+                    <!-- SIMPLIFIED BUNDLE CREATOR & ITEM SELECTOR -->
+                    <div class="bg-white p-6 rounded-3xl shadow border space-y-5">
+                        <div class="flex justify-between items-center border-b pb-3">
                             <div>
                                 <h2 class="font-black text-indigo-950 uppercase text-xs tracking-wider">
                                     {{ editingBundleId ? 'Edit Current Bundle' : 'Create New Bundle' }}
                                 </h2>
-                                <p class="text-[10px] text-slate-400">Add or modify bundle names, prices, and descriptions.</p>
+                                <p class="text-[10px] text-slate-400">Set generic sock & shirt amounts, price, and include merchandise.</p>
                             </div>
                             <button v-if="editingBundleId" @click="resetBundleForm" class="text-xs font-bold text-slate-400 hover:underline">Cancel Editing</button>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <!-- Row 1: Basic Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Bundle Name</label>
-                                <input v-model="bundleForm.name" placeholder="e.g. Small Bundle" class="w-full border p-2.5 rounded-xl text-xs font-bold bg-slate-50">
+                                <input v-model="bundleForm.name" placeholder="e.g. Mega Package" class="w-full border p-2.5 rounded-xl text-xs font-bold bg-slate-50">
                             </div>
                             <div>
                                 <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Bundle Price ($)</label>
-                                <input v-model.number="bundleForm.price" type="number" placeholder="50" class="w-full border p-2.5 rounded-xl text-xs font-black text-indigo-600 bg-slate-50">
+                                <input v-model.number="bundleForm.price" type="number" placeholder="400" class="w-full border p-2.5 rounded-xl text-xs font-black text-indigo-600 bg-slate-50">
                             </div>
                             <div>
-                                <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Editable Description</label>
-                                <input v-model="bundleForm.desc" placeholder="e.g. 1 Pin + 1 Patch" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
+                                <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Description</label>
+                                <input v-model="bundleForm.desc" placeholder="e.g. 3 Socks + 1 Shirt + 1 Patch + 1 Pin + 1 Bag" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Generic Sock and Shirt Quantities -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                            <div>
+                                <label class="text-[10px] font-black uppercase text-indigo-900 block mb-1">
+                                    🧦 Sock Pairs (Any Color):
+                                </label>
+                                <div class="flex items-center space-x-2">
+                                    <input v-model.number="bundleForm.requiresSocks" type="number" min="0" class="w-24 border p-2 rounded-xl text-xs font-bold text-center bg-white">
+                                    <span class="text-[10px] text-slate-500">pair(s) of socks (user picks colors at sale)</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black uppercase text-indigo-900 block mb-1">
+                                    👕 T-Shirts (Standard $150 - Style 1/2/3):
+                                </label>
+                                <div class="flex items-center space-x-2">
+                                    <input v-model.number="bundleForm.requiresShirt" type="number" min="0" class="w-24 border p-2 rounded-xl text-xs font-bold text-center bg-white">
+                                    <span class="text-[10px] text-slate-500">shirt(s) (excludes $300 Signed Shirt)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Include Other Merchandise Items (Patch, Pin, Tote Bag, etc.) -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border space-y-2">
+                            <label class="text-[10px] font-black uppercase text-indigo-950 block">
+                                📦 Include Other Merchandise In This Bundle (Stock Deducted When Sold):
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto no-scrollbar p-1">
+                                <div v-for="item in nonClothingItems" :key="item.id" 
+                                    class="bg-white p-2.5 rounded-xl border flex justify-between items-center text-xs shadow-sm">
+                                    <div class="truncate mr-2">
+                                        <div class="font-bold truncate text-[11px]">{{ item.name }}</div>
+                                        <div class="text-[9px] text-slate-400 truncate">{{ item.style }} (${{ item.price }})</div>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <button @click="adjustBundleFormComp(item.id, -1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 font-bold text-xs flex items-center justify-center">-</button>
+                                        <span class="w-5 text-center font-black text-indigo-600 text-xs">{{ getBundleFormCompQty(item.id) }}</span>
+                                        <button @click="adjustBundleFormComp(item.id, 1)" class="w-6 h-6 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">+</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -297,7 +341,7 @@
                         </button>
 
                         <!-- LIST OF CURRENT ACTIVE BUNDLES WITH EDIT/DELETE -->
-                        <div class="mt-6 border-t pt-4">
+                        <div class="border-t pt-4">
                             <h3 class="font-black text-indigo-950 uppercase text-[10px] tracking-wider mb-3">Current Active Bundles</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div v-for="(b, idx) in bundles" :key="b.id" 
@@ -306,6 +350,11 @@
                                         <div class="font-black text-xs text-slate-800">{{ b.name }}</div>
                                         <div class="text-sm font-black text-amber-600">${{ b.price }}</div>
                                         <div class="text-[10px] text-slate-400 mt-1 italic">{{ b.desc || 'No description' }}</div>
+                                        <div class="text-[9px] text-indigo-600 mt-1 font-bold">
+                                            {{ b.requiresSocks ? b.requiresSocks + 'x Socks ' : '' }}
+                                            {{ b.requiresShirt ? b.requiresShirt + 'x Shirt ' : '' }}
+                                            {{ (b.components && b.components.length) ? '+ ' + b.components.length + ' item(s)' : '' }}
+                                        </div>
                                     </div>
                                     <div class="flex flex-col space-y-1.5 flex-shrink-0">
                                         <button @click="editBundle(b)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition">Edit</button>
@@ -535,7 +584,7 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- BUNDLE OPTION CUSTOMIZER MODAL -->
+    <!-- DYNAMIC BUNDLE OPTION CUSTOMIZER MODAL -->
     <!-- ========================================== -->
     <div v-if="customizingBundle" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border">
@@ -552,7 +601,7 @@
                 
                 <!-- Sock Color Choices (If Bundle has Socks) -->
                 <div v-if="customizingBundle.requiresSocks > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-                    <p class="text-xs font-black uppercase text-indigo-950">Select Sock Colors ({{ customizingBundle.requiresSocks }} pairs required):</p>
+                    <p class="text-xs font-black uppercase text-indigo-950">Select Sock Colors ({{ customizingBundle.requiresSocks }} pairs):</p>
                     <div v-for="n in customizingBundle.requiresSocks" :key="n" class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-600">Sock #{{ n }}:</span>
                         <div class="flex space-x-1">
@@ -566,9 +615,9 @@
                     </div>
                 </div>
 
-                <!-- T-Shirt Style & Size Choices (If Bundle has T-Shirt) -->
+                <!-- T-Shirt Style & Size Choices (ONLY $150 STANDARD SHIRTS, SIGNED EXCLUDED) -->
                 <div v-if="customizingBundle.requiresShirt > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-                    <p class="text-xs font-black uppercase text-indigo-950">Select T-Shirt Options:</p>
+                    <p class="text-xs font-black uppercase text-indigo-950">Select T-Shirt Options ($150 Standard Shirts):</p>
                     
                     <!-- Style Selection -->
                     <div>
@@ -594,9 +643,20 @@
                     </div>
                 </div>
 
-                <!-- Summary of other included items -->
+                <!-- Included Fixed Products (Patches, Pins, Bags, etc.) -->
+                <div v-if="customizingBundle.components && customizingBundle.components.length > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-1.5">
+                    <p class="text-[10px] font-black uppercase text-indigo-950">Included Merchandise:</p>
+                    <div class="space-y-1">
+                        <div v-for="comp in customizingBundle.components" :key="comp.itemId" class="flex justify-between text-xs text-slate-700">
+                            <span>• {{ getItemName(comp.itemId) }}</span>
+                            <span class="font-bold text-indigo-600">x{{ comp.qty }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description summary -->
                 <div class="text-[10px] text-slate-400 bg-amber-50 p-3 rounded-xl border border-amber-200">
-                    <span class="font-bold text-amber-800">Included items:</span> {{ customizingBundle.desc }}
+                    <span class="font-bold text-amber-800">Description:</span> {{ customizingBundle.desc || 'No description' }}
                 </div>
 
             </div>
@@ -623,7 +683,7 @@ const initPOS = () => {
         { id: 2, category: 'Socks', name: 'Socks (Grey)', style: 'Grey', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
         { id: 3, category: 'Socks', name: 'Socks (Black)', style: 'Black', price: 40, cost: 14, stocks: 100, boxSize: 3, image: '' },
         
-        // T-SHIRTS (Page 2)
+        // T-SHIRTS (Page 2) - Style 1 Signed is $300 and EXCLUDED from bundles
         { id: 4, category: 'T-Shirts', name: 'Style 1 (Staff Signed)', style: 'Black', price: 300, cost: 38.3, stocks: 10, boxSize: 1, image: '' },
         { id: 5, category: 'T-Shirts', name: 'Style 1 (For Staff)', style: 'Black', price: 150, cost: 38.3, stocks: 290, boxSize: 2, image: '' },
         { id: 6, category: 'T-Shirts', name: 'Style 2 (Souvenir)', style: 'Black', price: 150, cost: 52.8, stocks: 200, boxSize: 2, image: '' },
@@ -635,7 +695,7 @@ const initPOS = () => {
         { id: 10, category: 'Merchandise', name: 'Tote Bag', style: 'Black Graphic', price: 120, cost: 16.3, stocks: 200, boxSize: 1, image: '' },
     ];
 
-    // INITIAL BUNDLE TEMPLATES WITH TYPE REQUIREMENTS
+    // INITIAL BUNDLE TEMPLATES WITH SAVINGS DEFINITIONS
     const INITIAL_BUNDLES = [
         { 
             id: 'b1', 
@@ -644,10 +704,11 @@ const initPOS = () => {
             desc: '3 Socks + 1 Shirt + 1 Patch + 1 Pin + 1 Tote Bag',
             requiresSocks: 3,
             requiresShirt: 1,
-            requiresPatch: 1,
-            requiresPin: 1,
-            requiresBag: 1,
-            originalTotal: 450
+            components: [
+                { itemId: 8, qty: 1 }, // Patch
+                { itemId: 9, qty: 1 }, // Pin
+                { itemId: 10, qty: 1 } // Bag
+            ]
         },
         { 
             id: 'b2', 
@@ -656,10 +717,10 @@ const initPOS = () => {
             desc: '1 Patch + 1 Pin',
             requiresSocks: 0,
             requiresShirt: 0,
-            requiresPatch: 1,
-            requiresPin: 1,
-            requiresBag: 0,
-            originalTotal: 60
+            components: [
+                { itemId: 8, qty: 1 }, // Patch
+                { itemId: 9, qty: 1 }  // Pin
+            ]
         }
     ];
 
@@ -667,9 +728,9 @@ const initPOS = () => {
         setup() {
             const view = ref('reg');
 
-            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v14')) || [...INITIAL_ITEMS]);
-            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v14')) || []);
-            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v14')) || [...INITIAL_BUNDLES]);
+            const items = ref(JSON.parse(localStorage.getItem('mc_pos_items_v31')) || [...INITIAL_ITEMS]);
+            const sales = ref(JSON.parse(localStorage.getItem('mc_pos_sales_v31')) || []);
+            const bundles = ref(JSON.parse(localStorage.getItem('mc_pos_bundles_v31')) || [...INITIAL_BUNDLES]);
 
             const cart = ref([]);
             const discount = ref(0);
@@ -679,7 +740,7 @@ const initPOS = () => {
 
             // Bundle Management & Customizer States
             const editingBundleId = ref(null);
-            const bundleForm = ref({ name: '', price: 0, desc: '' });
+            const bundleForm = ref({ name: '', price: 0, desc: '', requiresSocks: 0, requiresShirt: 0, components: [] });
             const customizingBundle = ref(null);
             const bundleOptions = ref({
                 socks: ['White', 'White', 'Black'],
@@ -688,9 +749,9 @@ const initPOS = () => {
             });
 
             watch([items, sales, bundles], () => {
-                localStorage.setItem('mc_pos_items_v14', JSON.stringify(items.value));
-                localStorage.setItem('mc_pos_sales_v14', JSON.stringify(sales.value));
-                localStorage.setItem('mc_pos_bundles_v14', JSON.stringify(bundles.value));
+                localStorage.setItem('mc_pos_items_v31', JSON.stringify(items.value));
+                localStorage.setItem('mc_pos_sales_v31', JSON.stringify(sales.value));
+                localStorage.setItem('mc_pos_bundles_v31', JSON.stringify(bundles.value));
             }, { deep: true });
 
             const categorizedItems = computed(() => {
@@ -701,6 +762,18 @@ const initPOS = () => {
                 });
                 return groups;
             });
+
+            const nonClothingItems = computed(() => {
+                return items.value.filter(i => {
+                    const c = (i.category || '').toLowerCase();
+                    return !c.includes('sock') && !c.includes('shirt') && !c.includes('t-shirt');
+                });
+            });
+
+            const getItemName = (id) => {
+                const it = items.value.find(x => x.id === id);
+                return it ? `${it.name} (${it.style})` : 'Product';
+            };
 
             // Grid Span Class Helper (Sizes 1 to 5)
             const getBoxSpanClass = (boxSize) => {
@@ -713,7 +786,6 @@ const initPOS = () => {
                 return 'span-size-3';
             };
 
-            // Image Container Height Helper for Proportions
             const getImageHeightClass = (boxSize) => {
                 const size = Number(boxSize) || 3;
                 if (size === 1) return 'h-48 md:h-56';
@@ -724,70 +796,107 @@ const initPOS = () => {
                 return 'h-32 md:h-36';
             };
 
-            // ============================================================
-            // AUTOMATIC BUNDLE MATCHING LOGIC (CATEGORY & QUANTITY BASED)
-            // ============================================================
+            // =========================================================================
+            // DYNAMIC GREEDY AUTO BUNDLE MATCHING (EXACT CONSUMPTION, NO OVERLAP)
+            // =========================================================================
             const autoBundleMatches = computed(() => {
-                // Count loose non-bundle items in cart
-                let socksCount = 0;
-                let shirtCount = 0;
-                let patchCount = 0;
-                let pinCount = 0;
-                let bagCount = 0;
+                // 1. Build accurate available pool of loose items in cart (Counted ONCE)
+                let poolSocks = 0;
+                let poolShirts = 0;
+                const poolItems = {}; // { itemId: count }
 
                 cart.value.forEach(c => {
                     if (!c.isBundle && !c.isDirectDonation) {
-                        if (c.category === 'Socks') socksCount += c.qty;
-                        if (c.category === 'T-Shirts') shirtCount += c.qty;
-                        if (c.id === 8 || (c.name && c.name.includes('Patch'))) patchCount += c.qty;
-                        if (c.id === 9 || (c.name && c.name.includes('Pin'))) pinCount += c.qty;
-                        if (c.id === 10 || (c.name && c.name.includes('Bag'))) bagCount += c.qty;
+                        const qty = Number(c.qty) || 1;
+                        const cat = (c.category || '').toLowerCase();
+                        const name = (c.name || '').toLowerCase();
+                        
+                        // Count Socks
+                        if (cat.includes('sock') || name.includes('sock')) {
+                            poolSocks += qty;
+                        }
+                        // Count Eligible $150 Shirts (EXCLUDE $300 Signed Shirt / ID: 4)
+                        else if (
+                            (cat.includes('shirt') || cat.includes('t-shirt') || name.includes('shirt') || name.includes('style')) &&
+                            c.id !== 4 &&
+                            !name.includes('signed') &&
+                            Number(c.price) < 300
+                        ) {
+                            poolShirts += qty;
+                        }
+
+                        // Always record item count accurately by ID (Counted strictly once)
+                        poolItems[c.id] = (poolItems[c.id] || 0) + qty;
                     }
                 });
 
+                // 2. Evaluate all active bundles and calculate exact dollar savings
+                const bundleSavingsList = bundles.value.map(b => {
+                    const socksVal = (Number(b.requiresSocks) || 0) * 40;
+                    const shirtsVal = (Number(b.requiresShirt) || 0) * 150;
+                    let compsVal = 0;
+                    if (b.components && b.components.length > 0) {
+                        b.components.forEach(cp => {
+                            const inv = items.value.find(x => x.id === cp.itemId);
+                            const unitP = inv ? Number(inv.price) : 0;
+                            compsVal += unitP * (Number(cp.qty) || 1);
+                        });
+                    }
+                    const origTotal = socksVal + shirtsVal + compsVal;
+                    const savings = Math.max(0, origTotal - Number(b.price));
+                    return {
+                        bundle: b,
+                        savings,
+                        origTotal
+                    };
+                });
+
+                // Sort bundles strictly by LARGEST savings first (e.g. Mega Package $50 before Small Bundle $10)
+                bundleSavingsList.sort((a, b) => b.savings - a.savings);
+
                 const matches = [];
 
-                // 1. Check Mega Package (3 Socks, 1 Shirt, 1 Patch, 1 Pin, 1 Bag) -> Saves $50
-                const megaPossibilities = Math.min(
-                    Math.floor(socksCount / 3),
-                    Math.floor(shirtCount / 1),
-                    Math.floor(patchCount / 1),
-                    Math.floor(pinCount / 1),
-                    Math.floor(bagCount / 1)
-                );
+                // 3. Greedily match bundles in order of largest savings and consume items
+                bundleSavingsList.forEach(item => {
+                    if (item.savings <= 0) return;
+                    const b = item.bundle;
 
-                if (megaPossibilities > 0) {
-                    matches.push({
-                        name: `${megaPossibilities}x Mega Package Match`,
-                        savings: megaPossibilities * 50
-                    });
-                    socksCount -= megaPossibilities * 3;
-                    shirtCount -= megaPossibilities * 1;
-                    patchCount -= megaPossibilities * 1;
-                    pinCount -= megaPossibilities * 1;
-                    bagCount -= megaPossibilities * 1;
-                }
+                    let maxCount = Infinity;
 
-                // 2. Check Small Bundle (1 Patch + 1 Pin) -> Saves $10
-                const smallPossibilities = Math.min(
-                    Math.floor(patchCount / 1),
-                    Math.floor(pinCount / 1)
-                );
+                    if (b.requiresSocks > 0) {
+                        maxCount = Math.min(maxCount, Math.floor(poolSocks / b.requiresSocks));
+                    }
+                    if (b.requiresShirt > 0) {
+                        maxCount = Math.min(maxCount, Math.floor(poolShirts / b.requiresShirt));
+                    }
+                    if (b.components && b.components.length > 0) {
+                        b.components.forEach(cp => {
+                            const available = poolItems[cp.itemId] || 0;
+                            maxCount = Math.min(maxCount, Math.floor(available / (Number(cp.qty) || 1)));
+                        });
+                    }
 
-                if (smallPossibilities > 0) {
-                    matches.push({
-                        name: `${smallPossibilities}x Small Bundle Match`,
-                        savings: smallPossibilities * 10
-                    });
-                }
+                    if (maxCount > 0 && maxCount !== Infinity) {
+                        matches.push({
+                            name: `${maxCount}x ${b.name} Match`,
+                            savings: maxCount * item.savings
+                        });
+
+                        // Consume items so they cannot be reused for other bundles
+                        if (b.requiresSocks > 0) poolSocks -= maxCount * b.requiresSocks;
+                        if (b.requiresShirt > 0) poolShirts -= maxCount * b.requiresShirt;
+                        if (b.components && b.components.length > 0) {
+                            b.components.forEach(cp => {
+                                poolItems[cp.itemId] = (poolItems[cp.itemId] || 0) - (maxCount * (Number(cp.qty) || 1));
+                            });
+                        }
+                    }
+                });
 
                 return matches;
             });
 
-            const autoBundleSavingsTotal = computed(() => {
-                return autoBundleMatches.value.reduce((sum, m) => sum + m.savings, 0);
-            });
-
+            const autoBundleSavingsTotal = computed(() => autoBundleMatches.value.reduce((sum, m) => sum + m.savings, 0));
             const cartRawSubtotal = computed(() => cart.value.reduce((sum, i) => sum + (i.price * i.qty), 0));
             const cartFinalTotal = computed(() => {
                 const subAfterBundle = Math.max(0, cartRawSubtotal.value - autoBundleSavingsTotal.value);
@@ -795,7 +904,7 @@ const initPOS = () => {
             });
             const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartFinalTotal.value));
 
-            // FINANCIAL CALCULATIONS (WITH DONATION AUDIT)
+            // FINANCIAL CALCULATIONS
             const methodTotals = computed(() => {
                 const totals = {
                     Cash: { sales: 0, donations: 0, totalReceived: 0 },
@@ -818,24 +927,10 @@ const initPOS = () => {
                 return totals;
             });
 
-            const grandTotalDonations = computed(() => {
-                return (
-                    methodTotals.value.Cash.donations +
-                    methodTotals.value.Alipay.donations +
-                    methodTotals.value.PayMe.donations
-                );
-            });
+            const grandTotalDonations = computed(() => methodTotals.value.Cash.donations + methodTotals.value.Alipay.donations + methodTotals.value.PayMe.donations);
+            const totalBalance = computed(() => 500 + methodTotals.value.Cash.totalReceived + methodTotals.value.Alipay.totalReceived + methodTotals.value.PayMe.totalReceived);
 
-            const totalBalance = computed(() => {
-                return (
-                    500 + 
-                    methodTotals.value.Cash.totalReceived + 
-                    methodTotals.value.Alipay.totalReceived + 
-                    methodTotals.value.PayMe.totalReceived
-                );
-            });
-
-            // CART LOGIC WITH AUTOMATIC GROUPING & AMOUNT
+            // CART ACTIONS
             const addToCart = (item) => {
                 if (item.stocks <= 0) return;
                 const existing = cart.value.find(c => c.id === item.id && !c.isBundle && !c.isDirectDonation);
@@ -858,11 +953,8 @@ const initPOS = () => {
 
             const decreaseCartQty = (idx) => {
                 const c = cart.value[idx];
-                if (c.qty > 1) {
-                    c.qty--;
-                } else {
-                    cart.value.splice(idx, 1);
-                }
+                if (c.qty > 1) c.qty--;
+                else cart.value.splice(idx, 1);
             };
 
             const addDirectDonation = () => {
@@ -879,11 +971,11 @@ const initPOS = () => {
                 }
             };
 
-            // BUNDLE SALE CUSTOMIZER
+            // BUNDLE CUSTOMIZER
             const openBundleCustomizer = (bundle) => {
                 customizingBundle.value = bundle;
                 bundleOptions.value = {
-                    socks: ['White', 'White', 'Black'],
+                    socks: Array(bundle.requiresSocks || 3).fill('White'),
                     shirtStyle: 'Style 2 (Souvenir Black)',
                     shirtSize: 'L'
                 };
@@ -896,7 +988,7 @@ const initPOS = () => {
                 const components = [];
                 let descParts = [];
 
-                // Track Socks components
+                // 1. Socks Selection
                 if (b.requiresSocks > 0) {
                     const sockCounts = { White: 0, Grey: 0, Black: 0 };
                     for (let i = 0; i < b.requiresSocks; i++) {
@@ -910,24 +1002,26 @@ const initPOS = () => {
                     descParts.push(`Socks: ${bundleOptions.value.socks.slice(0, b.requiresSocks).join('/')}`);
                 }
 
-                // Track Shirt components
+                // 2. Standard $150 T-Shirt Selection (Style 1 Staff, Style 2, Style 3)
                 if (b.requiresShirt > 0) {
-                    let shirtId = 6; // default Style 2
+                    let shirtId = 6; // Default Style 2
                     if (bundleOptions.value.shirtStyle.includes('Style 1')) shirtId = 5;
                     if (bundleOptions.value.shirtStyle.includes('Style 3')) shirtId = 7;
                     components.push({ itemId: shirtId, qty: 1 });
                     descParts.push(`Shirt: ${bundleOptions.value.shirtStyle} (${bundleOptions.value.shirtSize})`);
                 }
 
-                // Track Merch components
-                if (b.requiresPatch > 0) { components.push({ itemId: 8, qty: 1 }); descParts.push('Patch'); }
-                if (b.requiresPin > 0) { components.push({ itemId: 9, qty: 1 }); descParts.push('Pin'); }
-                if (b.requiresBag > 0) { components.push({ itemId: 10, qty: 1 }); descParts.push('Bag'); }
+                // 3. Linked Merchandise Items (Patch, Pin, Bag, etc.)
+                if (b.components && b.components.length > 0) {
+                    b.components.forEach(comp => {
+                        components.push({ itemId: comp.itemId, qty: comp.qty });
+                    });
+                }
 
                 cart.value.push({
                     id: 'b_' + b.id + '_' + Date.now(),
                     name: `${b.name} (Bundle)`,
-                    style: descParts.join(' | '),
+                    style: descParts.length > 0 ? descParts.join(' | ') : (b.desc || ''),
                     price: b.price,
                     qty: 1,
                     isBundle: true,
@@ -942,7 +1036,7 @@ const initPOS = () => {
             const completeSale = () => {
                 const snap = JSON.parse(JSON.stringify(cart.value));
                 
-                // Deduct stock for products (both loose items and bundle components)
+                // Deduct stock
                 snap.forEach(c => {
                     if (c.isBundle) {
                         (c.components || []).forEach(comp => {
@@ -955,10 +1049,7 @@ const initPOS = () => {
                     }
                 });
 
-                const directDonationSum = snap
-                    .filter(c => c.isDirectDonation)
-                    .reduce((sum, c) => sum + (c.price * c.qty), 0);
-                
+                const directDonationSum = snap.filter(c => c.isDirectDonation).reduce((sum, c) => sum + (c.price * c.qty), 0);
                 const changeDonationAmt = isDonation.value ? Number(changeAmount.value) : 0;
                 const totalDonationForSale = directDonationSum + changeDonationAmt;
                 const billTotal = Number(cartFinalTotal.value);
@@ -1007,7 +1098,6 @@ const initPOS = () => {
                 sales.value.splice(idx, 1);
             };
 
-            // HIGH RESOLUTION UN-CROPPED IMAGE COMPRESSION
             const uploadImage = (e, item) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1036,13 +1126,34 @@ const initPOS = () => {
                 reader.readAsDataURL(file);
             };
 
-            // BUNDLE CREATION & EDITING
+            // BUNDLE CREATION & EDITING HELPERS
+            const getBundleFormCompQty = (itemId) => {
+                const comp = (bundleForm.value.components || []).find(c => c.itemId === itemId);
+                return comp ? comp.qty : 0;
+            };
+
+            const adjustBundleFormComp = (itemId, delta) => {
+                if (!bundleForm.value.components) bundleForm.value.components = [];
+                let comp = bundleForm.value.components.find(c => c.itemId === itemId);
+                if (!comp) {
+                    if (delta > 0) bundleForm.value.components.push({ itemId, qty: 1 });
+                } else {
+                    comp.qty += delta;
+                    if (comp.qty <= 0) {
+                        bundleForm.value.components = bundleForm.value.components.filter(c => c.itemId !== itemId);
+                    }
+                }
+            };
+
             const editBundle = (b) => {
                 editingBundleId.value = b.id;
                 bundleForm.value = {
                     name: b.name,
                     price: b.price,
-                    desc: b.desc || ''
+                    desc: b.desc || '',
+                    requiresSocks: b.requiresSocks || 0,
+                    requiresShirt: b.requiresShirt || 0,
+                    components: JSON.parse(JSON.stringify(b.components || []))
                 };
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             };
@@ -1051,27 +1162,24 @@ const initPOS = () => {
                 if (!bundleForm.value.name) return alert("Please enter a bundle name.");
                 if (bundleForm.value.price <= 0) return alert("Please enter a valid price.");
 
+                const bundleData = {
+                    name: bundleForm.value.name,
+                    price: Number(bundleForm.value.price),
+                    desc: bundleForm.value.desc,
+                    requiresSocks: Number(bundleForm.value.requiresSocks) || 0,
+                    requiresShirt: Number(bundleForm.value.requiresShirt) || 0,
+                    components: JSON.parse(JSON.stringify(bundleForm.value.components || []))
+                };
+
                 if (editingBundleId.value) {
                     const idx = bundles.value.findIndex(b => b.id === editingBundleId.value);
                     if (idx > -1) {
-                        bundles.value[idx] = { 
-                            ...bundles.value[idx], 
-                            name: bundleForm.value.name,
-                            price: bundleForm.value.price,
-                            desc: bundleForm.value.desc
-                        };
+                        bundles.value[idx] = { ...bundles.value[idx], ...bundleData };
                     }
                 } else {
                     bundles.value.unshift({
                         id: 'b_' + Date.now(),
-                        name: bundleForm.value.name,
-                        price: bundleForm.value.price,
-                        desc: bundleForm.value.desc,
-                        requiresSocks: 0,
-                        requiresShirt: 0,
-                        requiresPatch: 0,
-                        requiresPin: 0,
-                        requiresBag: 0
+                        ...bundleData
                     });
                 }
                 resetBundleForm();
@@ -1079,10 +1187,9 @@ const initPOS = () => {
 
             const resetBundleForm = () => {
                 editingBundleId.value = null;
-                bundleForm.value = { name: '', price: 0, desc: '' };
+                bundleForm.value = { name: '', price: 0, desc: '', requiresSocks: 0, requiresShirt: 0, components: [] };
             };
 
-            // GENERAL UTILITIES
             const addNewItem = () => {
                 items.value.unshift({
                     id: Date.now(),
@@ -1121,15 +1228,15 @@ const initPOS = () => {
 
             return {
                 view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
-                categorizedItems, cartRawSubtotal, cartFinalTotal, changeAmount, 
-                autoBundleMatches, autoBundleSavingsTotal,
+                categorizedItems, nonClothingItems, cartRawSubtotal, cartFinalTotal, changeAmount, 
+                autoBundleMatches, autoBundleSavingsTotal, getItemName,
                 methodTotals, grandTotalDonations, totalBalance,
                 editingBundleId, bundleForm, customizingBundle, bundleOptions,
                 getBoxSpanClass, getImageHeightClass,
                 addToCart, increaseCartQty, decreaseCartQty, addDirectDonation,
                 openBundleCustomizer, addConfiguredBundleToCart,
                 completeSale, deleteAndReturnStock,
-                uploadImage, editBundle, saveBundle, resetBundleForm,
+                uploadImage, getBundleFormCompQty, adjustBundleFormComp, editBundle, saveBundle, resetBundleForm,
                 addNewItem, exportExcel, resetData
             };
         }
