@@ -5,29 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
     
-    <!-- Multi-CDN Fallback for Vue 3 -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
-    <script>
-        if (typeof Vue === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Vue === 'undefined') {
-            document.write('<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"><\/script>');
-        }
-    </script>
-
-    <!-- Tailwind CSS -->
+    <!-- Primary CDNs with Auto-Failover -->
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- SheetJS (Excel) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script>
-        if (typeof XLSX === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
-        }
-    </script>
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         [v-cloak] { display: none !important; }
@@ -45,11 +26,11 @@
         }
 
         /* Desktop Column Spans */
-        .span-size-1 { grid-column: span 60 / span 60; } /* 1 per row */
-        .span-size-2 { grid-column: span 30 / span 30; } /* 2 per row */
-        .span-size-3 { grid-column: span 20 / span 20; } /* 3 per row */
-        .span-size-4 { grid-column: span 15 / span 15; } /* 4 per row */
-        .span-size-5 { grid-column: span 12 / span 12; } /* 5 per row */
+        .span-size-1 { grid-column: span 60 / span 60; }
+        .span-size-2 { grid-column: span 30 / span 30; }
+        .span-size-3 { grid-column: span 20 / span 20; }
+        .span-size-4 { grid-column: span 15 / span 15; }
+        .span-size-5 { grid-column: span 12 / span 12; }
 
         /* Tablet Responsive Scaling */
         @media (max-width: 1024px) and (min-width: 641px) {
@@ -72,13 +53,17 @@
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans">
 
-<!-- Fallback Loading Box -->
-<div id="no-script-error" style="padding: 40px; text-align: center; font-family: sans-serif;">
-    <h2 style="color: #1e1b4b; font-weight: bold; font-size: 1.25rem;">System Loading...</h2>
-    <p style="color: #64748b; font-size: 0.875rem; margin-top: 8px;">If this screen stays for more than 2 seconds, click below to clear cache and start:</p>
-    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 12px; background: #312e81; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        🚀 Reset Cache & Launch
-    </button>
+<!-- Fallback / Error Recovery Screen -->
+<div id="no-script-error" class="min-h-screen flex items-center justify-center p-6 text-center">
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 max-w-md w-full space-y-4">
+        <span class="text-4xl">🎷</span>
+        <h2 class="text-lg font-black text-indigo-950 uppercase tracking-wide">Starting Music Connect POS</h2>
+        <p id="loading-status" class="text-xs text-slate-500">Connecting to system engine...</p>
+        <button onclick="localStorage.clear(); location.reload();" 
+            class="w-full py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:bg-indigo-700 active:scale-95 transition">
+            ⚡ Clear Cache & Instant Launch
+        </button>
+    </div>
 </div>
 
 <div id="app" v-cloak style="display: none;">
@@ -295,3 +280,10 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Bundle Name</label>
+                                <input v-model="bundleForm.name" placeholder="e.g. Small Bundle" class="w-full border p-2.5 rounded-xl text-xs font-bold bg-slate-50">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Bundle Price ($)</label>
+                                <input v-model.number="bundleForm.price" type="number" placeholder="50" c
