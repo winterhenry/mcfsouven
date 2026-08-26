@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
     
-    <!-- Working Stable CDNs -->
+    <!-- Exact Working CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -17,7 +17,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 60-Column Master Grid (LCM of 1, 2, 3, 4, 5) */
+        /* 60-Column Master Grid for Sizes 1 to 5 */
         .grid-60 { display: grid; grid-template-columns: repeat(60, minmax(0, 1fr)); gap: 0.75rem; }
         .span-1 { grid-column: span 60; }
         .span-2 { grid-column: span 30; }
@@ -32,10 +32,11 @@
 </head>
 <body class="bg-slate-100">
 
-<!-- Loading fallback that unhides when Vue mounts -->
+<!-- Fallback message that disappears immediately when Vue starts -->
 <div id="no-script-error" style="padding: 20px; text-align: center; color: #1e1b4b; font-family: sans-serif;">
     <h2>System Loading...</h2>
     <p>Please wait a moment...</p>
+    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 10px; background: #312e81; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Cache & Reload</button>
 </div>
 
 <div id="app" style="display: none;">
@@ -49,27 +50,26 @@
             <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Register</button>
             <button @click="view = 'bun_sale'" :class="view === 'bun_sale' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Bundle Sale</button>
             <button @click="view = 'stk'" :class="view === 'stk' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Inventory</button>
-            <button @click="view = 'bal'" :class="view === 'bal' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Balance</button>
+            <button @click="view = 'rec'" :class="view === 'rec' ? 'bg-white text-indigo-900' : ''" class="px-3 py-2 rounded-md transition">Balance/Sales</button>
         </div>
     </nav>
 
     <main class="container mx-auto p-3 max-w-7xl">
         
-        <!-- MAIN CONTENT GRID -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- LEFT AREA (DYNAMIC BY TAB) -->
+            <!-- LEFT AREA (CHANGES BY TAB) -->
             <div class="lg:col-span-8 space-y-6">
 
                 <!-- ========================================== -->
                 <!-- VIEW 1: REGISTER (INDIVIDUAL ITEMS) -->
                 <!-- ========================================== -->
                 <div v-if="view === 'reg'" class="space-y-6">
-                    <!-- Top Action Bar -->
+                    <!-- Action Bar -->
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
                             <span class="text-xs font-bold uppercase text-indigo-900 tracking-wider">Product Catalog</span>
-                            <p class="text-[10px] text-slate-400">Selecting matching items will automatically trigger bundle pricing.</p>
+                            <p class="text-[10px] text-slate-400">Selecting matching items will automatically trigger bundle discount pricing.</p>
                         </div>
                         <button @click="addDirectDonation" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition flex items-center space-x-1">
                             <span>❤️</span> <span>Donate Only</span>
@@ -83,7 +83,7 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <span v-for="(m, i) in autoBundleMatches" :key="i" class="bg-white border border-amber-300 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xs">
-                                {{ m.name }} (Saved ${{ m.savings }})
+                                {{ m.name }} (Saved ${{ formatPrice(m.savings) }})
                             </span>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                                     item.stocks <= 0 ? 'opacity-40 grayscale cursor-not-allowed' : ''
                                 ]">
                                 
-                                <!-- FULL PHOTO DISPLAY (object-contain with no cropping) -->
+                                <!-- Full Photo Display (object-contain) -->
                                 <div class="relative w-full rounded-xl overflow-hidden mb-2 bg-slate-50 border border-slate-200/70 flex items-center justify-center p-1"
                                      :style="{ height: getImageHeight(item.boxSize) }">
                                     
@@ -112,20 +112,20 @@
                                         <span class="text-[8px] uppercase tracking-wider">No Photo</span>
                                     </div>
                                     
-                                    <!-- IN-BOX PHOTO UPLOAD BUTTON -->
+                                    <!-- In-Box Photo Upload Button -->
                                     <label @click.stop class="absolute bottom-1 right-1 bg-slate-900/80 hover:bg-indigo-600 text-white rounded-md px-1.5 py-0.5 text-[8px] font-bold cursor-pointer shadow-md backdrop-blur-sm transition flex items-center space-x-0.5">
                                         <span>{{ item.image ? '📷 Edit' : '+ Photo' }}</span>
                                         <input type="file" @change="uploadImage($event, item)" class="hidden" accept="image/*">
                                     </label>
                                 </div>
 
-                                <!-- ITEM DETAILS -->
+                                <!-- Item Details -->
                                 <div>
                                     <div class="font-bold text-xs text-slate-800 truncate leading-tight">{{ item.name }}</div>
                                     <div class="text-[9px] text-slate-400 truncate">{{ item.style }}</div>
                                 </div>
 
-                                <!-- PRICE & STOCK -->
+                                <!-- Price & Stock -->
                                 <div class="mt-2 flex justify-between items-end border-t pt-1.5 border-slate-100">
                                     <div class="text-base md:text-lg font-black text-indigo-600 leading-none">${{ item.price }}</div>
                                     <div class="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
@@ -144,20 +144,20 @@
                 <div v-if="view === 'bun_sale'" class="space-y-6">
                     <div class="bg-gradient-to-br from-amber-500 to-indigo-900 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
                         <div>
-                            <h2 class="text-lg font-black uppercase tracking-wider">Bundle Packages & Deals</h2>
+                            <h2 class="text-lg font-bold uppercase tracking-wider">Bundle Packages & Deals</h2>
                             <p class="text-xs text-amber-100 opacity-90 mt-1">Select any bundle to customize sock colors, t-shirt sizes, and options.</p>
                         </div>
                         <span class="text-4xl">🎁</span>
                     </div>
 
-                    <!-- Available Bundles Grid -->
+                    <!-- Bundles Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div v-for="b in bundles" :key="b.id"
                             class="bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                             <div>
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <h3 class="font-black text-slate-800 text-base">{{ b.name }}</h3>
+                                        <h3 class="font-bold text-slate-800 text-base">{{ b.name }}</h3>
                                         <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ b.desc || 'No description' }}</p>
                                     </div>
                                     <span class="text-2xl font-black text-amber-600">${{ b.price }}</span>
@@ -165,7 +165,7 @@
                             </div>
 
                             <button @click="openBundleModal(b)" 
-                                class="mt-4 w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow active:scale-95 transition flex items-center justify-center space-x-1">
+                                class="mt-4 w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow active:scale-95 transition flex items-center justify-center space-x-1">
                                 <span>⚡ Select Options & Add</span>
                             </button>
                         </div>
@@ -230,9 +230,10 @@
                 </div>
 
                 <!-- ========================================== -->
-                <!-- VIEW 4: BALANCE & AUDIT -->
+                <!-- VIEW 4: BALANCE & SALES -->
                 <!-- ========================================== -->
-                <div v-if="view === 'bal'" class="space-y-6">
+                <div v-if="view === 'rec'" class="space-y-6">
+                    <!-- Financial Cards -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="bg-indigo-950 text-white p-5 rounded-3xl shadow-lg border border-indigo-900 flex flex-col justify-between">
                             <div>
@@ -244,40 +245,37 @@
                         <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
                             <div>
                                 <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">Cash Total</p>
-                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.Cash.totalReceived.toFixed(2) }}</p>
+                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ formatPrice(methodTotals.Cash.totalReceived) }}</p>
                             </div>
                             <div class="text-[9px] text-slate-400 border-t pt-2 mt-2 space-y-0.5">
-                                <div class="flex justify-between font-black text-indigo-950"><span>Drawer Total:</span> <span>${{ (500 + methodTotals.Cash.totalReceived).toFixed(2) }}</span></div>
+                                <div class="flex justify-between font-bold text-indigo-950"><span>Drawer Total:</span> <span>${{ formatPrice(500 + methodTotals.Cash.totalReceived) }}</span></div>
                             </div>
                         </div>
                         <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
                             <div>
                                 <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">Alipay Total</p>
-                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.Alipay.totalReceived.toFixed(2) }}</p>
+                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ formatPrice(methodTotals.Alipay.totalReceived) }}</p>
                             </div>
                             <div class="text-[9px] text-slate-400 border-t pt-2 mt-2">
-                                <span class="text-emerald-600 font-bold">Donations: +${{ methodTotals.Alipay.donations.toFixed(2) }}</span>
+                                <span class="text-emerald-600 font-bold">Donations: +${{ formatPrice(methodTotals.Alipay.donations) }}</span>
                             </div>
                         </div>
                         <div class="bg-white p-5 rounded-3xl shadow border flex flex-col justify-between">
                             <div>
                                 <p class="text-[9px] font-bold uppercase text-slate-400 tracking-widest">PayMe Total</p>
-                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ methodTotals.PayMe.totalReceived.toFixed(2) }}</p>
+                                <p class="text-2xl font-black text-indigo-700 italic mt-1">${{ formatPrice(methodTotals.PayMe.totalReceived) }}</p>
                             </div>
                             <div class="text-[9px] text-slate-400 border-t pt-2 mt-2">
-                                <span class="text-emerald-600 font-bold">Donations: +${{ methodTotals.PayMe.donations.toFixed(2) }}</span>
+                                <span class="text-emerald-600 font-bold">Donations: +${{ formatPrice(methodTotals.PayMe.donations) }}</span>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Total Balance & Grand Donations -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-indigo-900 p-8 rounded-[36px] text-white shadow-xl flex flex-col sm:flex-row justify-between items-center">
                             <div>
-                                <h2 class="text-lg font-black uppercase tracking-widest text-emerald-100">Total System Balance</h2>
-                                <p class="text-xs opacity-75 mt-1">$500.00 Float + All Sales + All Donated Funds</p>
+                                <h2 class="text-lg font-bold uppercase tracking-widest text-emerald-100">Total System Balance</h2>
+                                <p class="text-xs opacity-75 mt-1">$500 Float + All Sales + All Donated Funds</p>
                             </div>
-                            <div class="text-5xl font-black tracking-tighter italic mt-4 sm:mt-0">${{ totalBalance.toFixed(2) }}</div>
-                        </div>
-                        <div class="bg-emerald-50 border-2 border-emerald-300 p-6 rounded-[36px] shadow-sm flex flex-col justify-between">
-                            <div>
-                                <p class="text-[10px] font-black uppercase trackin
+                            <div class="text-5xl font-black tracking-tighter italic mt-4 sm:mt-0">${
