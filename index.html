@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
-    
+    a
     <!-- Stable Global CDN Scripts & Live Sync Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -223,7 +223,7 @@
                         <span class="text-4xl">🎁</span>
                     </div>
 
-                    <!-- Available Bundles Grid (Preset $50 Bundle Removed) -->
+                    <!-- Available Bundles Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div v-for="b in bundles" :key="b.id"
                             class="bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
@@ -444,8 +444,8 @@
                 <!-- ========================================== -->
                 <div v-if="view === 'bal'" class="space-y-4">
                     
-                    <!-- Row 1: Payment Method Inflows -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    <!-- Row 1: Payment Method Inflows (Now 5 Columns including Bank Transfer) -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5">
                         <div class="bg-indigo-950 text-white p-3.5 rounded-2xl shadow border border-indigo-900 flex flex-col justify-between">
                             <div>
                                 <p class="text-[8px] font-bold uppercase opacity-50 tracking-widest">Starting Float</p>
@@ -478,6 +478,16 @@
                             </div>
                             <div class="text-[8px] text-slate-400 border-t pt-1 mt-1">
                                 <span class="text-emerald-600 font-bold">Support/Donations: +${{ methodTotals.PayMe.donations.toFixed(2) }}</span>
+                            </div>
+                        </div>
+                        <!-- Bank Transfer Total Card -->
+                        <div class="bg-white p-3.5 rounded-2xl shadow border flex flex-col justify-between">
+                            <div>
+                                <p class="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Bank Transfer</p>
+                                <p class="text-lg md:text-xl font-black text-indigo-700 italic mt-0.5">${{ methodTotals['Bank Transfer'].totalReceived.toFixed(2) }}</p>
+                            </div>
+                            <div class="text-[8px] text-slate-400 border-t pt-1 mt-1">
+                                <span class="text-emerald-600 font-bold">Support/Donations: +${{ methodTotals['Bank Transfer'].donations.toFixed(2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -676,11 +686,11 @@
                             <span class="text-3xl font-black text-indigo-600 tracking-tight">${{ cartFinalTotal }}</span>
                         </div>
 
-                        <!-- Payment Methods -->
-                        <div class="grid grid-cols-3 gap-1 pt-1">
-                            <button v-for="m in ['Cash', 'Alipay', 'PayMe']" :key="m" @click="paymentMethod = m"
+                        <!-- Payment Methods (Grid 4 with Bank Transfer) -->
+                        <div class="grid grid-cols-4 gap-1 pt-1">
+                            <button v-for="m in ['Cash', 'Alipay', 'PayMe', 'Bank Transfer']" :key="m" @click="paymentMethod = m"
                                 :class="paymentMethod === m ? 'bg-indigo-600 text-white shadow-md' : 'bg-white border text-slate-400'"
-                                class="py-2.5 rounded-xl text-[10px] font-black uppercase transition-all">{{ m }}</button>
+                                class="py-2.5 rounded-xl text-[9px] font-black uppercase transition-all tracking-tighter">{{ m }}</button>
                         </div>
 
                         <!-- Cash Paid & Change / Support Us -->
@@ -909,7 +919,6 @@ const initPOS = () => {
                 if (d) {
                     const parsed = JSON.parse(d);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        // Filter out old $50 bundle if lingering
                         loadedBundles = parsed.filter(b => b.id !== 'b3' && !b.name.includes('Small Bundle'));
                         break;
                     }
@@ -1288,12 +1297,13 @@ const initPOS = () => {
             });
             const changeAmount = computed(() => Math.max(0, (customerPaid.value || 0) - cartFinalTotal.value));
 
-            // FINANCIAL CALCULATIONS
+            // FINANCIAL CALCULATIONS (WITH BANK TRANSFER)
             const methodTotals = computed(() => {
                 const totals = {
                     Cash: { sales: 0, donations: 0, totalReceived: 0 },
                     Alipay: { sales: 0, donations: 0, totalReceived: 0 },
-                    PayMe: { sales: 0, donations: 0, totalReceived: 0 }
+                    PayMe: { sales: 0, donations: 0, totalReceived: 0 },
+                    'Bank Transfer': { sales: 0, donations: 0, totalReceived: 0 }
                 };
 
                 sales.value.forEach(s => {
@@ -1311,7 +1321,12 @@ const initPOS = () => {
                 return totals;
             });
 
-            const grandTotalDonations = computed(() => methodTotals.value.Cash.donations + methodTotals.value.Alipay.donations + methodTotals.value.PayMe.donations);
+            const grandTotalDonations = computed(() => 
+                methodTotals.value.Cash.donations + 
+                methodTotals.value.Alipay.donations + 
+                methodTotals.value.PayMe.donations +
+                methodTotals.value['Bank Transfer'].donations
+            );
             
             const grandTotalDiscounts = computed(() => {
                 return sales.value.reduce((sum, s) => {
@@ -1319,7 +1334,13 @@ const initPOS = () => {
                 }, 0);
             });
 
-            const totalBalance = computed(() => 2000 + methodTotals.value.Cash.totalReceived + methodTotals.value.Alipay.totalReceived + methodTotals.value.PayMe.totalReceived);
+            const totalBalance = computed(() => 
+                2000 + 
+                methodTotals.value.Cash.totalReceived + 
+                methodTotals.value.Alipay.totalReceived + 
+                methodTotals.value.PayMe.totalReceived +
+                methodTotals.value['Bank Transfer'].totalReceived
+            );
 
             // CART ACTIONS
             const addToCart = (item) => {
@@ -1378,7 +1399,7 @@ const initPOS = () => {
                 const components = [];
                 let descParts = [];
 
-                // 1. Socks Selection
+                // 1. Add Required Socks
                 if (b.requiresSocks > 0) {
                     if (b.sockColors && b.sockColors.length > 0) {
                         b.sockColors.forEach(col => {
@@ -1629,7 +1650,7 @@ const initPOS = () => {
                     name: 'New Product',
                     style: 'Size L',
                     price: 150,
-                    cost: 50,
+                    cost: 0,
                     stocks: 50,
                     boxSize: 6,
                     image: ''
@@ -1735,6 +1756,7 @@ const initPOS = () => {
                             cashInflow: 0,
                             alipayInflow: 0,
                             paymeInflow: 0,
+                            bankTransferInflow: 0,
                             totalInflow: 0
                         };
                     }
@@ -1757,12 +1779,13 @@ const initPOS = () => {
                     if (s.method === 'Cash') g.cashInflow += totalRec;
                     else if (s.method === 'Alipay') g.alipayInflow += totalRec;
                     else if (s.method === 'PayMe') g.paymeInflow += totalRec;
+                    else if (s.method === 'Bank Transfer') g.bankTransferInflow += totalRec;
                 });
 
                 const headers = [
                     "Date", "Transaction_Count", "Total_Product_Cost", "Gross_Product_Revenue",
                     "Total_Discounts_Applied", "Net_Product_Revenue", "Total_Support_Collected",
-                    "Total_Cash_Inflow", "Total_Alipay_Inflow", "Total_PayMe_Inflow", "Total_Money_Received",
+                    "Total_Cash_Inflow", "Total_Alipay_Inflow", "Total_PayMe_Inflow", "Total_Bank_Transfer_Inflow", "Total_Money_Received",
                     "Estimated_Gross_Profit"
                 ];
 
@@ -1781,6 +1804,7 @@ const initPOS = () => {
                         g.cashInflow.toFixed(2),
                         g.alipayInflow.toFixed(2),
                         g.paymeInflow.toFixed(2),
+                        (g.bankTransferInflow || 0).toFixed(2),
                         g.totalInflow.toFixed(2),
                         profit.toFixed(2)
                     ]);
