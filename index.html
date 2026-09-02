@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Music Connect POS</title>
     
-    <!-- Stable Global CDN Scripts -->
+    <!-- Stable Global CDN Scripts & Live Sync Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
 
     <style>
         [v-cloak] { display: none !important; }
@@ -66,11 +67,17 @@
 </div>
 
 <div id="app" v-cloak style="display: none;">
-    <!-- TOP NAVIGATION -->
+    <!-- TOP NAVIGATION WITH LIVE SYNC STATUS -->
     <nav class="bg-indigo-950 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-3">
             <span class="text-xl">🎷</span>
             <h1 class="font-black italic tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
+            <!-- Dynamic Sync Indicator -->
+            <span class="text-[9px] font-black px-2 py-0.5 rounded-full flex items-center space-x-1.5"
+                  :class="syncStatus === 'Live Synced' ? 'bg-emerald-900/80 text-emerald-300 border border-emerald-500/30' : 'bg-indigo-900 text-slate-300'">
+                <span class="w-1.5 h-1.5 rounded-full" :class="syncStatus === 'Live Synced' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+                <span>{{ syncStatus }}</span>
+            </span>
         </div>
         <div class="flex bg-indigo-900 rounded-xl p-1 text-[10px] font-bold uppercase shadow-inner">
             <button @click="view = 'reg'" :class="view === 'reg' ? 'bg-white text-indigo-950 shadow' : 'text-slate-300'" class="px-3 py-2 rounded-lg transition">Register</button>
@@ -93,13 +100,13 @@
                 <!-- ========================================== -->
                 <div v-if="view === 'reg'" class="space-y-4">
                     
-                    <!-- Action Bar -->
+                    <!-- Action Bar with "Support Us" -->
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
                             <span class="text-xs font-black uppercase text-indigo-950 tracking-wider">Product Catalog</span>
                             <p class="text-[10px] text-slate-400">Items sorted from S ➔ 3XL. Bundles automatically apply highest discount.</p>
                         </div>
-                        <button @click="addDirectDonation" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition flex items-center space-x-1">
+                        <button @click="addDirectDonation" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-full text-[10px] font-bold shadow-sm active:scale-95 transition flex items-center space-x-1.5">
                             <span>❤️</span> <span>Support Us</span>
                         </button>
                     </div>
@@ -216,7 +223,7 @@
                         <span class="text-4xl">🎁</span>
                     </div>
 
-                    <!-- Available Bundles Grid -->
+                    <!-- Available Bundles Grid (Preset $50 Bundle Removed) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div v-for="b in bundles" :key="b.id"
                             class="bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
@@ -423,7 +430,7 @@
                                     </div>
                                     <div class="flex flex-col space-y-1.5 flex-shrink-0">
                                         <button @click="editBundle(b)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition">Edit</button>
-                                        <button @click="bundles.splice(idx, 1)" class="bg-red-50 hover:bg-red-100 text-red-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition">Delete</button>
+                                        <button @click="deleteBundle(idx)" class="bg-red-50 hover:bg-red-100 text-red-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition">Delete</button>
                                     </div>
                                 </div>
                             </div>
@@ -461,7 +468,7 @@
                                 <p class="text-lg md:text-xl font-black text-indigo-700 italic mt-0.5">${{ methodTotals.Alipay.totalReceived.toFixed(2) }}</p>
                             </div>
                             <div class="text-[8px] text-slate-400 border-t pt-1 mt-1">
-                                <span class="text-emerald-600 font-bold">Donations: +${{ methodTotals.Alipay.donations.toFixed(2) }}</span>
+                                <span class="text-emerald-600 font-bold">Support/Donations: +${{ methodTotals.Alipay.donations.toFixed(2) }}</span>
                             </div>
                         </div>
                         <div class="bg-white p-3.5 rounded-2xl shadow border flex flex-col justify-between">
@@ -470,7 +477,7 @@
                                 <p class="text-lg md:text-xl font-black text-indigo-700 italic mt-0.5">${{ methodTotals.PayMe.totalReceived.toFixed(2) }}</p>
                             </div>
                             <div class="text-[8px] text-slate-400 border-t pt-1 mt-1">
-                                <span class="text-emerald-600 font-bold">Donations: +${{ methodTotals.PayMe.donations.toFixed(2) }}</span>
+                                <span class="text-emerald-600 font-bold">Support/Donations: +${{ methodTotals.PayMe.donations.toFixed(2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -490,23 +497,23 @@
                                 </div>
                             </div>
                             <p class="text-[8px] text-slate-400 mt-2 pt-1.5 border-t border-indigo-800/60 font-medium">
-                                $500.00 Float + All Sales & Donations
+                                $500.00 Float + All Sales & Support Funds
                             </p>
                         </div>
 
-                        <!-- Grand Donation Total -->
+                        <!-- Grand Support / Donation Total -->
                         <div class="bg-emerald-50 border border-emerald-300 p-4 rounded-2xl shadow-xs flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center space-x-1 text-emerald-800">
                                     <span class="text-xs">❤️</span>
-                                    <p class="text-[8px] font-black uppercase tracking-widest">Grand Donation Total</p>
+                                    <p class="text-[8px] font-black uppercase tracking-widest">Grand Support / Donation Total</p>
                                 </div>
                                 <div class="text-2xl md:text-3xl font-black text-emerald-600 tracking-tight mt-1.5">
                                     ${{ grandTotalDonations.toFixed(2) }}
                                 </div>
                             </div>
                             <p class="text-[8px] text-emerald-700/80 mt-2 pt-1.5 border-t border-emerald-200 font-medium">
-                                Direct & Change Donations
+                                All Direct & Customer Change Support
                             </p>
                         </div>
 
@@ -533,7 +540,7 @@
                         <div class="p-4 border-b bg-slate-50 flex flex-col md:flex-row justify-between md:items-center gap-3">
                             <div>
                                 <h3 class="font-black text-xs uppercase text-slate-500 tracking-widest">Transaction History ({{ sales.length }})</h3>
-                                <p class="text-[9px] text-slate-400">Costs, revenues, discounts & payment methods logged in real-time.</p>
+                                <p class="text-[9px] text-slate-400">Costs, revenues, discounts & payment methods synced in real-time.</p>
                             </div>
                             <!-- Export & Backup Action Buttons -->
                             <div class="flex flex-wrap gap-1.5 items-center">
@@ -567,7 +574,7 @@
                                 <div class="flex flex-wrap gap-1.5 mt-1 items-center">
                                     <span class="bg-slate-100 text-[8px] font-black px-2 py-0.5 rounded text-slate-600 uppercase">{{ s.method }}</span>
                                     <span v-if="s.totalDonation > 0" class="bg-emerald-50 text-emerald-600 text-[8px] font-bold px-2 py-0.5 rounded uppercase">
-                                        ❤️ Donation: ${{ s.totalDonation.toFixed(2) }}
+                                        ❤️ Support: ${{ s.totalDonation.toFixed(2) }}
                                     </span>
                                     <span v-if="(s.totalDiscount || s.discount) > 0" class="bg-amber-50 text-amber-700 text-[8px] font-bold px-2 py-0.5 rounded uppercase border border-amber-200">
                                         🏷️ Discount: -${{ (s.totalDiscount !== undefined ? s.totalDiscount : (s.discount || 0)).toFixed(2) }}
@@ -676,7 +683,7 @@
                                 class="py-2.5 rounded-xl text-[10px] font-black uppercase transition-all">{{ m }}</button>
                         </div>
 
-                        <!-- Cash Paid & Change/Donation -->
+                        <!-- Cash Paid & Change / Support Us -->
                         <div class="bg-white p-3 rounded-2xl border border-slate-200 space-y-2">
                             <div class="flex justify-between items-center">
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Amount Paid</label>
@@ -693,7 +700,7 @@
                                 <div class="text-right leading-none">
                                     <div class="text-lg font-black" :class="isDonation ? 'text-emerald-600' : 'text-indigo-600'">${{ changeAmount }}</div>
                                     <div class="text-[8px] font-black uppercase" :class="isDonation ? 'text-emerald-600' : 'text-slate-400'">
-                                        {{ isDonation ? 'Added to Donations' : 'Change Due' }}
+                                        {{ isDonation ? 'Added to Support Us' : 'Change Due' }}
                                     </div>
                                 </div>
                             </div>
@@ -793,9 +800,9 @@
 </div>
 
 <script>
-// Resilient POS bootstrapper
+// Resilient POS bootstrapper & Real-Time Sync
 const initPOS = () => {
-    const { createApp, ref, computed, watch } = Vue;
+    const { createApp, ref, computed, watch, onMounted } = Vue;
 
     // EXACT INITIAL ITEMS (NO STANDALONE BAG, SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150)
     const INITIAL_ITEMS = [
@@ -834,7 +841,7 @@ const initPOS = () => {
         { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: 9.3, stocks: 300, boxSize: 3, image: '' }
     ];
 
-    // INITIAL BUNDLE TEMPLATES (EVERYTHING BUNDLE USES TOTE+KEYCHAIN ID 6 WITHOUT EXTRA STANDALONE KEYCHAIN)
+    // INITIAL BUNDLES (Everything Bundle $380, Socks Set $120) - $50 preset bundle removed
     const INITIAL_BUNDLES = [
         { 
             id: 'b1', 
@@ -861,11 +868,11 @@ const initPOS = () => {
         }
     ];
 
-    // Safe Backward-Compatible Storage Migration Loader
+    // Storage Migration
     const migrateAndLoadData = () => {
-        const itemKeys = ['mc_pos_app_items', 'mc_pos_items_v40', 'mc_pos_items_v38', 'mc_pos_items_v37', 'mc_pos_items_v36', 'mc_pos_items_v35'];
-        const salesKeys = ['mc_pos_app_sales', 'mc_pos_sales_v40', 'mc_pos_sales_v38', 'mc_pos_sales_v37', 'mc_pos_sales_v36', 'mc_pos_sales_v35'];
-        const bundleKeys = ['mc_pos_app_bundles', 'mc_pos_bundles_v40', 'mc_pos_bundles_v38', 'mc_pos_bundles_v37', 'mc_pos_bundles_v36', 'mc_pos_bundles_v35'];
+        const itemKeys = ['mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40', 'mc_pos_items_v38', 'mc_pos_items_v37', 'mc_pos_items_v36', 'mc_pos_items_v35'];
+        const salesKeys = ['mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40', 'mc_pos_sales_v38', 'mc_pos_sales_v37', 'mc_pos_sales_v36', 'mc_pos_sales_v35'];
+        const bundleKeys = ['mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40', 'mc_pos_bundles_v38', 'mc_pos_bundles_v37', 'mc_pos_bundles_v36', 'mc_pos_bundles_v35'];
 
         let loadedItems = null;
         for (let k of itemKeys) {
@@ -902,7 +909,8 @@ const initPOS = () => {
                 if (d) {
                     const parsed = JSON.parse(d);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        loadedBundles = parsed;
+                        // Filter out old $50 bundle if lingering
+                        loadedBundles = parsed.filter(b => b.id !== 'b3' && !b.name.includes('Small Bundle'));
                         break;
                     }
                 }
@@ -912,7 +920,7 @@ const initPOS = () => {
         return {
             items: loadedItems || [...INITIAL_ITEMS],
             sales: loadedSales || [],
-            bundles: loadedBundles || [...INITIAL_BUNDLES]
+            bundles: (loadedBundles && loadedBundles.length > 0) ? loadedBundles : [...INITIAL_BUNDLES]
         };
     };
 
@@ -921,6 +929,7 @@ const initPOS = () => {
     createApp({
         setup() {
             const view = ref('reg');
+            const syncStatus = ref('Connecting...');
 
             const items = ref(initialMigrated.items);
             const sales = ref(initialMigrated.sales);
@@ -944,11 +953,126 @@ const initPOS = () => {
             // Master Storage Sync
             watch([items, sales, bundles], () => {
                 try {
-                    localStorage.setItem('mc_pos_app_items', JSON.stringify(items.value));
-                    localStorage.setItem('mc_pos_app_sales', JSON.stringify(sales.value));
-                    localStorage.setItem('mc_pos_app_bundles', JSON.stringify(bundles.value));
+                    localStorage.setItem('mc_pos_app_items_v41', JSON.stringify(items.value));
+                    localStorage.setItem('mc_pos_app_sales_v41', JSON.stringify(sales.value));
+                    localStorage.setItem('mc_pos_app_bundles_v41', JSON.stringify(bundles.value));
                 } catch(e) {}
             }, { deep: true });
+
+            // ============================================================
+            // DYNAMIC REAL-TIME CROSS-DEVICE SYNCHRONIZATION ENGINE
+            // ============================================================
+            const deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+            const syncRoom = 'music_connect_pos_live_sync_room';
+            let mqttClient = null;
+
+            const broadcastStateUpdate = (actionType) => {
+                const payload = {
+                    senderId: deviceId,
+                    action: actionType,
+                    timestamp: Date.now(),
+                    items: items.value,
+                    sales: sales.value,
+                    bundles: bundles.value
+                };
+
+                // 1. Same-device tab sync
+                if (window.BroadcastChannel) {
+                    try {
+                        const bc = new BroadcastChannel('mc_pos_live_channel');
+                        bc.postMessage(payload);
+                    } catch(e) {}
+                }
+
+                // 2. Cross-device WebSocket sync
+                if (mqttClient && mqttClient.isConnected && mqttClient.isConnected()) {
+                    try {
+                        const message = new Paho.MQTT.Message(JSON.stringify(payload));
+                        message.destinationName = `mc_pos_sync/${syncRoom}/update`;
+                        message.qos = 1;
+                        mqttClient.send(message);
+                    } catch(e) {}
+                }
+            };
+
+            const handleIncomingSync = (data) => {
+                if (!data) return;
+                if (data.items && Array.isArray(data.items)) items.value = data.items;
+                if (data.sales && Array.isArray(data.sales)) sales.value = data.sales;
+                if (data.bundles && Array.isArray(data.bundles)) bundles.value = data.bundles;
+            };
+
+            const setupLiveSync = () => {
+                // Local broadcast listener
+                if (window.BroadcastChannel) {
+                    try {
+                        const bc = new BroadcastChannel('mc_pos_live_channel');
+                        bc.onmessage = (ev) => {
+                            if (ev.data && ev.data.senderId !== deviceId) {
+                                handleIncomingSync(ev.data);
+                            }
+                        };
+                    } catch(e) {}
+                }
+
+                // Local storage fallback listener
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'mc_pos_app_sales_v41' || e.key === 'mc_pos_app_items_v41' || e.key === 'mc_pos_app_bundles_v41') {
+                        const migrated = migrateAndLoadData();
+                        items.value = migrated.items;
+                        sales.value = migrated.sales;
+                        bundles.value = migrated.bundles;
+                    }
+                });
+
+                // Remote Cross-Device WebSocket Sync
+                if (typeof Paho !== 'undefined' && Paho.MQTT) {
+                    try {
+                        const client = new Paho.MQTT.Client('broker.emqx.io', 8084, 'pos_' + deviceId);
+                        
+                        client.onConnectionLost = () => {
+                            syncStatus.value = 'Reconnecting...';
+                            setTimeout(connectMqtt, 3000);
+                        };
+
+                        client.onMessageArrived = (message) => {
+                            try {
+                                const payload = JSON.parse(message.payloadString);
+                                if (payload && payload.senderId !== deviceId) {
+                                    handleIncomingSync(payload);
+                                }
+                            } catch (e) {}
+                        };
+
+                        const connectMqtt = () => {
+                            client.connect({
+                                useSSL: true,
+                                timeout: 4,
+                                keepAliveInterval: 30,
+                                onSuccess: () => {
+                                    syncStatus.value = 'Live Synced';
+                                    client.subscribe(`mc_pos_sync/${syncRoom}/#`);
+                                },
+                                onFailure: () => {
+                                    syncStatus.value = 'Live Synced (Local)';
+                                    setTimeout(connectMqtt, 6000);
+                                }
+                            });
+                        };
+
+                        mqttClient = client;
+                        connectMqtt();
+                    } catch(e) {
+                        syncStatus.value = 'Live Synced (Local)';
+                    }
+                } else {
+                    syncStatus.value = 'Live Synced (Local)';
+                }
+            };
+
+            onMounted(() => {
+                setupLiveSync();
+            });
 
             const sizeRank = { 'S': 1, 'M': 2, 'L': 3, 'XL': 4, '2XL': 5, '3XL': 6 };
 
@@ -1034,7 +1158,7 @@ const initPOS = () => {
                 return 'h-32 md:h-36';
             };
 
-            // Dynamic Cost Calculator for any transaction
+            // Dynamic Cost Calculator
             const calculateSaleCost = (s) => {
                 if (!s || !s.rawCart || !Array.isArray(s.rawCart)) return 0;
                 let totalCost = 0;
@@ -1225,11 +1349,11 @@ const initPOS = () => {
             };
 
             const addDirectDonation = () => {
-                const amt = prompt("Enter Direct Donation Amount ($):");
+                const amt = prompt("Enter Support Us Amount ($):");
                 if (amt && !isNaN(amt) && parseFloat(amt) > 0) {
                     cart.value.push({
                         id: 'don_' + Date.now(),
-                        name: 'Direct Donation',
+                        name: 'Support Us',
                         price: parseFloat(amt),
                         qty: 1,
                         isBundle: false,
@@ -1254,7 +1378,7 @@ const initPOS = () => {
                 const components = [];
                 let descParts = [];
 
-                // 1. Add Required Socks
+                // 1. Socks Selection
                 if (b.requiresSocks > 0) {
                     if (b.sockColors && b.sockColors.length > 0) {
                         b.sockColors.forEach(col => {
@@ -1269,7 +1393,7 @@ const initPOS = () => {
                     }
                 }
 
-                // 2. T-Shirt Selection (Finds exact size box)
+                // 2. T-Shirt Selection
                 if (b.requiresShirt > 0) {
                     const styleKey = bundleOptions.value.shirtStyle;
                     const sizeKey = bundleOptions.value.shirtSize;
@@ -1286,7 +1410,7 @@ const initPOS = () => {
                     descParts.push(`Shirt: ${styleKey} (${sizeKey})`);
                 }
 
-                // 3. Linked Merchandise Items (e.g. Tote Bag with Keychain ID 6, Patch ID 8)
+                // 3. Linked Merchandise Items
                 if (b.components && b.components.length > 0) {
                     b.components.forEach(comp => {
                         components.push({ itemId: comp.itemId, qty: comp.qty });
@@ -1356,6 +1480,9 @@ const initPOS = () => {
                 discount.value = 0;
                 customerPaid.value = 0;
                 isDonation.value = false;
+
+                // Real-time broadcast
+                broadcastStateUpdate('SALE_COMPLETED');
                 alert("Transaction completed successfully!");
             };
 
@@ -1377,6 +1504,7 @@ const initPOS = () => {
                     });
                 }
                 sales.value.splice(idx, 1);
+                broadcastStateUpdate('SALE_DELETED');
             };
 
             const uploadImage = (e, item) => {
@@ -1401,13 +1529,14 @@ const initPOS = () => {
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         item.image = canvas.toDataURL('image/jpeg', 0.8);
+                        broadcastStateUpdate('IMAGE_UPLOADED');
                     };
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             };
 
-            // BUNDLE CREATION & SOCK COLOR SELECTOR HELPERS
+            // BUNDLE CREATION HELPERS
             const toggleBundleSockColor = (color) => {
                 if (!bundleForm.value.sockColors) bundleForm.value.sockColors = [];
                 const idx = bundleForm.value.sockColors.indexOf(color);
@@ -1454,6 +1583,11 @@ const initPOS = () => {
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             };
 
+            const deleteBundle = (idx) => {
+                bundles.value.splice(idx, 1);
+                broadcastStateUpdate('BUNDLE_DELETED');
+            };
+
             const saveBundle = () => {
                 if (!bundleForm.value.name) return alert("Please enter a bundle name.");
                 if (bundleForm.value.price <= 0) return alert("Please enter a valid price.");
@@ -1480,6 +1614,7 @@ const initPOS = () => {
                     });
                 }
                 resetBundleForm();
+                broadcastStateUpdate('BUNDLE_SAVED');
             };
 
             const resetBundleForm = () => {
@@ -1499,11 +1634,10 @@ const initPOS = () => {
                     boxSize: 6,
                     image: ''
                 });
+                broadcastStateUpdate('ITEM_ADDED');
             };
 
-            // ============================================================
-            // CSV & EXCEL EXPORT FUNCTIONS
-            // ============================================================
+            // CSV & EXCEL EXPORTS
             const downloadCSV = (filename, rows) => {
                 const processRow = (row) => {
                     return row.map(val => {
@@ -1522,11 +1656,10 @@ const initPOS = () => {
                 document.body.removeChild(link);
             };
 
-            // 1. Transaction History CSV
             const exportTransactionsCSV = () => {
                 const headers = [
                     "Transaction_ID", "Timestamp", "Status", "Payment_Method", "Items_Purchased",
-                    "Product_Cost_Total", "Product_Sales_Revenue", "Discount_Applied", "Donation_Amount",
+                    "Product_Cost_Total", "Product_Sales_Revenue", "Discount_Applied", "Support_Amount",
                     "Total_Received", "Estimated_Profit"
                 ];
 
@@ -1557,7 +1690,6 @@ const initPOS = () => {
                 downloadCSV(`Transactions_${new Date().toISOString().slice(0,10)}.csv`, rows);
             };
 
-            // 2. Inventory CSV
             const exportInventoryCSV = () => {
                 const headers = [
                     "Item_ID", "Item_Name", "Style_Size", "Category", "In_Stock_Quantity",
@@ -1587,7 +1719,6 @@ const initPOS = () => {
                 downloadCSV(`Inventory_${new Date().toISOString().slice(0,10)}.csv`, rows);
             };
 
-            // 3. Daily Financial Summary CSV
             const exportDailySummaryCSV = () => {
                 const dailyGroups = {};
 
@@ -1630,7 +1761,7 @@ const initPOS = () => {
 
                 const headers = [
                     "Date", "Transaction_Count", "Total_Product_Cost", "Gross_Product_Revenue",
-                    "Total_Discounts_Applied", "Net_Product_Revenue", "Total_Donations_Collected",
+                    "Total_Discounts_Applied", "Net_Product_Revenue", "Total_Support_Collected",
                     "Total_Cash_Inflow", "Total_Alipay_Inflow", "Total_PayMe_Inflow", "Total_Money_Received",
                     "Estimated_Gross_Profit"
                 ];
@@ -1658,7 +1789,6 @@ const initPOS = () => {
                 downloadCSV(`Daily_Financial_Summary_${new Date().toISOString().slice(0,10)}.csv`, rows);
             };
 
-            // 4. Backup Entire App State (JSON)
             const exportBackupJSON = () => {
                 const backupPayload = {
                     app: "Music Connect POS",
@@ -1678,7 +1808,6 @@ const initPOS = () => {
                 document.body.removeChild(link);
             };
 
-            // 5. Restore Backup with Validation
             const importBackupJSON = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1698,6 +1827,7 @@ const initPOS = () => {
                             items.value = data.items;
                             bundles.value = data.bundles;
                             sales.value = data.sales;
+                            broadcastStateUpdate('DATA_RESTORED');
                             alert("✅ Data successfully restored from backup!");
                         }
                     } catch (err) {
@@ -1708,7 +1838,6 @@ const initPOS = () => {
                 reader.readAsText(file);
             };
 
-            // Excel XLSX Export
             const exportExcel = () => {
                 const data = sales.value.map(s => {
                     const txCost = Number(s.cost !== undefined ? s.cost : calculateSaleCost(s)) || 0;
@@ -1725,7 +1854,7 @@ const initPOS = () => {
                         Product_Cost: txCost,
                         Product_Sales_Revenue: pSales,
                         Discount_Applied: discountAmt,
-                        Donation_Amount: donationAmt,
+                        Support_Amount: donationAmt,
                         Total_Received: totalRec,
                         Estimated_Profit: pSales - txCost
                     };
@@ -1739,12 +1868,13 @@ const initPOS = () => {
             const resetData = () => {
                 if (confirm("Reset everything to default PDF values? All records and uploads will be reset.")) {
                     localStorage.clear();
+                    broadcastStateUpdate('FACTORY_RESET');
                     window.location.reload();
                 }
             };
 
             return {
-                view, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
+                view, syncStatus, items, bundles, sales, cart, discount, paymentMethod, customerPaid, isDonation,
                 categorizedItems, nonClothingItems, cartRawSubtotal, cartFinalTotal, changeAmount, 
                 autoBundleMatches, autoBundleSavingsTotal, getItemName, calculateSaleCost,
                 methodTotals, grandTotalDonations, grandTotalDiscounts, totalBalance,
@@ -1753,7 +1883,8 @@ const initPOS = () => {
                 addToCart, increaseCartQty, decreaseCartQty, addDirectDonation,
                 openBundleCustomizer, addConfiguredBundleToCart,
                 completeSale, deleteAndReturnStock,
-                uploadImage, toggleBundleSockColor, isSockColorSelected, getBundleFormCompQty, adjustBundleFormComp, editBundle, saveBundle, resetBundleForm,
+                uploadImage, toggleBundleSockColor, isSockColorSelected, getBundleFormCompQty, adjustBundleFormComp, 
+                editBundle, deleteBundle, saveBundle, resetBundleForm,
                 addNewItem, exportTransactionsCSV, exportInventoryCSV, exportDailySummaryCSV, exportBackupJSON, importBackupJSON, exportExcel, resetData
             };
         }
