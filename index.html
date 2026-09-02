@@ -288,23 +288,23 @@
                                             </label>
                                         </td>
                                         <td class="p-3">
-                                            <input v-model="item.name" @change="broadcastItemUpdate(item)" class="font-bold w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
-                                            <input v-model="item.style" @change="broadcastItemUpdate(item)" class="text-[10px] text-slate-400 w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
+                                            <input v-model="item.name" @change="handleItemPropertyChange(item)" class="font-bold w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
+                                            <input v-model="item.style" @change="handleItemPropertyChange(item)" class="text-[10px] text-slate-400 w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
                                         </td>
                                         <!-- Category Selector -->
                                         <td class="p-3 w-32">
-                                            <select v-model="item.category" @change="broadcastItemUpdate(item)" class="border rounded p-1 text-[10px] font-bold bg-white w-full">
+                                            <select v-model="item.category" @change="handleItemPropertyChange(item)" class="border rounded p-1 text-[10px] font-bold bg-white w-full">
                                                 <option value="Socks">Socks</option>
                                                 <option value="T-Shirts">T-Shirts</option>
                                                 <option value="Merchandise">Merchandise</option>
                                             </select>
                                         </td>
                                         <td class="p-3 text-center">
-                                            <input v-model.number="item.stocks" @change="broadcastItemUpdate(item)" type="number" class="w-16 border rounded p-1 text-center font-bold">
+                                            <input v-model.number="item.stocks" @change="handleStockInputChange(item, item.stocks)" type="number" class="w-16 border rounded p-1 text-center font-bold">
                                         </td>
                                         <!-- Box Sizes 1 to 7 -->
                                         <td class="p-3 text-center">
-                                            <select v-model.number="item.boxSize" @change="broadcastItemUpdate(item)" class="border rounded p-1 text-[10px] font-bold bg-white">
+                                            <select v-model.number="item.boxSize" @change="handleItemPropertyChange(item)" class="border rounded p-1 text-[10px] font-bold bg-white">
                                                 <option value="1">Size 1 (Full)</option>
                                                 <option value="2">Size 2 (1/2)</option>
                                                 <option value="3">Size 3 (1/3)</option>
@@ -315,10 +315,10 @@
                                             </select>
                                         </td>
                                         <td class="p-3 text-right font-mono text-slate-400">
-                                            $<input v-model.number="item.cost" @change="broadcastItemUpdate(item)" type="number" step="0.1" class="w-16 border-b border-transparent text-right outline-none bg-transparent">
+                                            $<input v-model.number="item.cost" @change="handleItemPropertyChange(item)" type="number" step="0.1" class="w-16 border-b border-transparent text-right outline-none bg-transparent">
                                         </td>
                                         <td class="p-3 text-right font-bold text-indigo-600">
-                                            $<input v-model.number="item.price" @change="broadcastItemUpdate(item)" type="number" class="w-16 border-b border-transparent text-right outline-none bg-transparent font-black">
+                                            $<input v-model.number="item.price" @change="handleItemPropertyChange(item)" type="number" class="w-16 border-b border-transparent text-right outline-none bg-transparent font-black">
                                         </td>
                                         <td class="p-3 text-center">
                                             <button @click="deleteItem(idx)" class="text-red-300 hover:text-red-500 text-lg font-bold">✕</button>
@@ -880,9 +880,9 @@ const initPOS = () => {
 
     // Storage Migration with Non-Destructive Fallbacks
     const migrateAndLoadData = () => {
-        const itemKeys = ['mc_pos_app_items_v46', 'mc_pos_app_items_v45', 'mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40'];
-        const salesKeys = ['mc_pos_app_sales_v46', 'mc_pos_app_sales_v45', 'mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40'];
-        const bundleKeys = ['mc_pos_app_bundles_v46', 'mc_pos_app_bundles_v45', 'mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40'];
+        const itemKeys = ['mc_pos_app_items_v47', 'mc_pos_app_items_v46', 'mc_pos_app_items_v45', 'mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40'];
+        const salesKeys = ['mc_pos_app_sales_v47', 'mc_pos_app_sales_v46', 'mc_pos_app_sales_v45', 'mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40'];
+        const bundleKeys = ['mc_pos_app_bundles_v47', 'mc_pos_app_bundles_v46', 'mc_pos_app_bundles_v45', 'mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40'];
 
         let loadedItems = null;
         for (let k of itemKeys) {
@@ -963,17 +963,60 @@ const initPOS = () => {
             // Master Storage Sync
             watch([items, sales, bundles], () => {
                 try {
-                    localStorage.setItem('mc_pos_app_items_v46', JSON.stringify(items.value));
-                    localStorage.setItem('mc_pos_app_sales_v46', JSON.stringify(sales.value));
-                    localStorage.setItem('mc_pos_app_bundles_v46', JSON.stringify(bundles.value));
+                    localStorage.setItem('mc_pos_app_items_v47', JSON.stringify(items.value));
+                    localStorage.setItem('mc_pos_app_sales_v47', JSON.stringify(sales.value));
+                    localStorage.setItem('mc_pos_app_bundles_v47', JSON.stringify(bundles.value));
                 } catch(e) {}
             }, { deep: true });
+
+            // ============================================================
+            // DYNAMIC INVENTORY & CONFLICT-FREE STOCK DERIVATION
+            // ============================================================
+            const getItemSoldQty = (itemId) => {
+                let totalSold = 0;
+                (sales.value || []).forEach(s => {
+                    if (s.rawCart && Array.isArray(s.rawCart)) {
+                        s.rawCart.forEach(c => {
+                            if (c.isBundle && c.components) {
+                                c.components.forEach(comp => {
+                                    if (comp.itemId === itemId) {
+                                        totalSold += (Number(comp.qty) || 1) * (Number(c.qty) || 1);
+                                    }
+                                });
+                            } else if (!c.isDirectDonation && c.id === itemId) {
+                                totalSold += Number(c.qty) || 1;
+                            }
+                        });
+                    }
+                });
+                return totalSold;
+            };
+
+            const updateAllItemCurrentStocks = () => {
+                items.value.forEach(item => {
+                    if (item.baseStock === undefined) {
+                        item.baseStock = (Number(item.stocks) || 0) + getItemSoldQty(item.id);
+                    }
+                    item.stocks = Math.max(0, (Number(item.baseStock) || 0) - getItemSoldQty(item.id));
+                });
+            };
+
+            const handleStockInputChange = (item, newStockVal) => {
+                const val = Number(newStockVal) || 0;
+                item.baseStock = val + getItemSoldQty(item.id);
+                item.stocks = val;
+                broadcastEvent('ITEM_UPDATED', { item });
+            };
+
+            const handleItemPropertyChange = (item) => {
+                broadcastEvent('ITEM_UPDATED', { item });
+            };
 
             // ============================================================
             // SMART NON-DESTRUCTIVE EVENT-DRIVEN SYNC ENGINE
             // ============================================================
             const deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
-            const syncRoom = 'music_connect_pos_live_sync_room_v46';
+            const syncRoom = 'music_connect_pos_live_sync_room_v47';
             let mqttClient = null;
 
             // Merges sales by ID union
@@ -986,6 +1029,7 @@ const initPOS = () => {
                     }
                 });
                 sales.value = Array.from(map.values()).sort((a, b) => b.id - a.id);
+                updateAllItemCurrentStocks();
             };
 
             // Merges items preserving uploaded photos
@@ -1004,6 +1048,7 @@ const initPOS = () => {
                     }
                 });
                 items.value = Array.from(map.values());
+                updateAllItemCurrentStocks();
             };
 
             const broadcastEvent = (actionType, eventData = {}) => {
@@ -1017,7 +1062,7 @@ const initPOS = () => {
                 // Local Tab Broadcast
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel_v46');
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v47');
                         bc.postMessage(payload);
                     } catch(e) {}
                 }
@@ -1053,24 +1098,14 @@ const initPOS = () => {
                     case 'NEW_SALE':
                         if (data.sale && !sales.value.find(s => s.id === data.sale.id)) {
                             sales.value.unshift(data.sale);
-                            if (data.deductions && Array.isArray(data.deductions)) {
-                                data.deductions.forEach(d => {
-                                    const inv = items.value.find(x => x.id === d.itemId);
-                                    if (inv) inv.stocks -= d.qty;
-                                });
-                            }
+                            updateAllItemCurrentStocks();
                         }
                         break;
 
                     case 'DELETE_SALE':
                         if (data.saleId) {
                             sales.value = sales.value.filter(s => s.id !== data.saleId);
-                            if (data.restorations && Array.isArray(data.restorations)) {
-                                data.restorations.forEach(r => {
-                                    const inv = items.value.find(x => x.id === r.itemId);
-                                    if (inv) inv.stocks += r.qty;
-                                });
-                            }
+                            updateAllItemCurrentStocks();
                         }
                         break;
 
@@ -1087,6 +1122,7 @@ const initPOS = () => {
                             if (idx > -1) {
                                 const curImg = items.value[idx].image;
                                 items.value[idx] = { ...data.item, image: data.item.image || curImg };
+                                updateAllItemCurrentStocks();
                             }
                         }
                         break;
@@ -1111,6 +1147,7 @@ const initPOS = () => {
                         if (data.items) items.value = data.items;
                         if (data.sales) sales.value = data.sales;
                         if (data.bundles) bundles.value = data.bundles;
+                        updateAllItemCurrentStocks();
                         break;
                 }
             };
@@ -1118,7 +1155,7 @@ const initPOS = () => {
             const setupLiveSync = () => {
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel_v46');
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v47');
                         bc.onmessage = (ev) => handleIncomingPayload(ev.data);
                     } catch(e) {}
                 }
@@ -1167,6 +1204,7 @@ const initPOS = () => {
             };
 
             onMounted(() => {
+                updateAllItemCurrentStocks();
                 setupLiveSync();
             });
 
@@ -1518,7 +1556,7 @@ const initPOS = () => {
                     descParts.push(`Shirt: ${styleKey} (${sizeKey})`);
                 }
 
-                // 3. Linked Merchandise Items
+                // 3. Linked Merchandise Items (Tote Bag with Keychain ID 6, Patch ID 8)
                 if (b.components && b.components.length > 0) {
                     b.components.forEach(comp => {
                         components.push({ itemId: comp.itemId, qty: comp.qty });
@@ -1542,35 +1580,13 @@ const initPOS = () => {
 
             const completeSale = () => {
                 const snap = JSON.parse(JSON.stringify(cart.value));
-                const deductions = [];
-
-                // Deduct stock locally and collect delta list
-                snap.forEach(c => {
-                    if (c.isBundle) {
-                        (c.components || []).forEach(comp => {
-                            const inv = items.value.find(x => x.id === comp.itemId);
-                            if (inv) {
-                                const q = (Number(comp.qty) || 1) * (Number(c.qty) || 1);
-                                inv.stocks -= q;
-                                deductions.push({ itemId: comp.itemId, qty: q });
-                            }
-                        });
-                    } else if (!c.isDirectDonation) {
-                        const inv = items.value.find(x => x.id === c.id);
-                        if (inv) {
-                            const q = Number(c.qty) || 1;
-                            inv.stocks -= q;
-                            deductions.push({ itemId: c.id, qty: q });
-                        }
-                    }
-                });
-
                 const directDonationSum = snap.filter(c => c.isDirectDonation).reduce((sum, c) => sum + (c.price * c.qty), 0);
                 const changeDonationAmt = isDonation.value ? Number(changeAmount.value) : 0;
                 const totalDonationForSale = directDonationSum + changeDonationAmt;
                 const billTotal = Number(cartFinalTotal.value);
                 const productSalesOnly = Math.max(0, billTotal - directDonationSum);
                 const totalMoneyReceived = billTotal + changeDonationAmt;
+
                 const totalDiscountForSale = Number(autoBundleSavingsTotal.value || 0) + (Number(discount.value) || 0);
                 const txCost = calculateSaleCost({ rawCart: snap });
 
@@ -1593,51 +1609,25 @@ const initPOS = () => {
                 };
 
                 sales.value.unshift(newSale);
+                updateAllItemCurrentStocks();
 
                 cart.value = [];
                 discount.value = 0;
                 customerPaid.value = 0;
                 isDonation.value = false;
 
-                // Broadcast Delta Event to all devices
-                broadcastEvent('NEW_SALE', { sale: newSale, deductions });
+                // Broadcast Event to all online peers
+                broadcastEvent('NEW_SALE', { sale: newSale });
                 alert("Transaction completed successfully!");
             };
 
             const deleteAndReturnStock = (idx) => {
                 if (!confirm("Are you sure you want to delete this sale and restore its stock to inventory?")) return;
                 const rec = sales.value[idx];
-                const restorations = [];
-                
-                if (rec.rawCart) {
-                    rec.rawCart.forEach(c => {
-                        if (c.isBundle) {
-                            (c.components || []).forEach(comp => {
-                                const inv = items.value.find(x => x.id === comp.itemId);
-                                if (inv) {
-                                    const q = (Number(comp.qty) || 1) * (Number(c.qty) || 1);
-                                    inv.stocks += q;
-                                    restorations.push({ itemId: comp.itemId, qty: q });
-                                }
-                            });
-                        } else if (!c.isDirectDonation) {
-                            const inv = items.value.find(x => x.id === c.id);
-                            if (inv) {
-                                const q = Number(c.qty) || 1;
-                                inv.stocks += q;
-                                restorations.push({ itemId: c.id, qty: q });
-                            }
-                        }
-                    });
-                }
-                
                 const deletedId = rec.id;
                 sales.value.splice(idx, 1);
-                broadcastEvent('DELETE_SALE', { saleId: deletedId, restorations });
-            };
-
-            const broadcastItemUpdate = (item) => {
-                broadcastEvent('ITEM_UPDATED', { item });
+                updateAllItemCurrentStocks();
+                broadcastEvent('DELETE_SALE', { saleId: deletedId });
             };
 
             const uploadImage = (e, item) => {
@@ -1769,12 +1759,14 @@ const initPOS = () => {
                     image: ''
                 };
                 items.value.unshift(newItem);
+                updateAllItemCurrentStocks();
                 broadcastEvent('ITEM_UPDATED', { item: newItem });
             };
 
             const deleteItem = (idx) => {
                 if (confirm("Delete this product?")) {
                     items.value.splice(idx, 1);
+                    updateAllItemCurrentStocks();
                     broadcastEvent('STATE_RESPONSE', { items: items.value, sales: sales.value, bundles: bundles.value });
                 }
             };
@@ -1972,6 +1964,7 @@ const initPOS = () => {
                             items.value = data.items;
                             bundles.value = data.bundles;
                             sales.value = data.sales;
+                            updateAllItemCurrentStocks();
                             broadcastEvent('DATA_RESTORED', { items: items.value, sales: sales.value, bundles: bundles.value });
                             alert("✅ Data successfully restored from backup!");
                         }
@@ -2027,7 +2020,7 @@ const initPOS = () => {
                 getBoxSpanClass, getImageHeightClass, getItemColorClasses, getSizeBadgeClass,
                 addToCart, increaseCartQty, decreaseCartQty, addDirectDonation,
                 openBundleCustomizer, addConfiguredBundleToCart,
-                completeSale, deleteAndReturnStock, broadcastItemUpdate,
+                completeSale, deleteAndReturnStock, handleStockInputChange, handleItemPropertyChange,
                 uploadImage, toggleBundleSockColor, isSockColorSelected, getBundleFormCompQty, adjustBundleFormComp, 
                 editBundle, deleteBundle, saveBundle, resetBundleForm,
                 addNewItem, deleteItem, exportTransactionsCSV, exportInventoryCSV, exportDailySummaryCSV, exportBackupJSON, importBackupJSON, exportExcel, resetData
