@@ -218,7 +218,7 @@
                     <div class="bg-gradient-to-br from-amber-500 to-indigo-900 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
                         <div>
                             <h2 class="text-lg font-black uppercase tracking-wider">Bundle Packages & Deals</h2>
-                            <p class="text-xs text-amber-100 opacity-90 mt-1">Select any bundle to customize t-shirt designs, sizes, and options.</p>
+                            <p class="text-xs text-amber-100 opacity-90 mt-1">Select any bundle to customize t-shirt designs, bag choice, and options.</p>
                         </div>
                         <span class="text-4xl">🎁</span>
                     </div>
@@ -246,7 +246,7 @@
                 </div>
 
                 <!-- ========================================== -->
-                <!-- VIEW 3: INVENTORY (ITEMS & BOX SIZES 1-7) -->
+                <!-- VIEW 3: INVENTORY (ITEMS & BUNDLES CONFIG) -->
                 <!-- ========================================== -->
                 <div v-if="view === 'stk'" class="space-y-6">
                     <!-- Products Table -->
@@ -288,23 +288,23 @@
                                             </label>
                                         </td>
                                         <td class="p-3">
-                                            <input v-model="item.name" class="font-bold w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
-                                            <input v-model="item.style" class="text-[10px] text-slate-400 w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
+                                            <input v-model="item.name" @change="broadcastItemUpdate(item)" class="font-bold w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
+                                            <input v-model="item.style" @change="broadcastItemUpdate(item)" class="text-[10px] text-slate-400 w-full border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none bg-transparent">
                                         </td>
                                         <!-- Category Selector -->
                                         <td class="p-3 w-32">
-                                            <select v-model="item.category" class="border rounded p-1 text-[10px] font-bold bg-white w-full">
+                                            <select v-model="item.category" @change="broadcastItemUpdate(item)" class="border rounded p-1 text-[10px] font-bold bg-white w-full">
                                                 <option value="Socks">Socks</option>
                                                 <option value="T-Shirts">T-Shirts</option>
                                                 <option value="Merchandise">Merchandise</option>
                                             </select>
                                         </td>
                                         <td class="p-3 text-center">
-                                            <input v-model.number="item.stocks" type="number" class="w-16 border rounded p-1 text-center font-bold">
+                                            <input v-model.number="item.stocks" @change="broadcastItemUpdate(item)" type="number" class="w-16 border rounded p-1 text-center font-bold">
                                         </td>
                                         <!-- Box Sizes 1 to 7 -->
                                         <td class="p-3 text-center">
-                                            <select v-model.number="item.boxSize" class="border rounded p-1 text-[10px] font-bold bg-white">
+                                            <select v-model.number="item.boxSize" @change="broadcastItemUpdate(item)" class="border rounded p-1 text-[10px] font-bold bg-white">
                                                 <option value="1">Size 1 (Full)</option>
                                                 <option value="2">Size 2 (1/2)</option>
                                                 <option value="3">Size 3 (1/3)</option>
@@ -315,10 +315,10 @@
                                             </select>
                                         </td>
                                         <td class="p-3 text-right font-mono text-slate-400">
-                                            $<input v-model.number="item.cost" type="number" step="0.1" class="w-16 border-b border-transparent text-right outline-none bg-transparent">
+                                            $<input v-model.number="item.cost" @change="broadcastItemUpdate(item)" type="number" step="0.1" class="w-16 border-b border-transparent text-right outline-none bg-transparent">
                                         </td>
                                         <td class="p-3 text-right font-bold text-indigo-600">
-                                            $<input v-model.number="item.price" type="number" class="w-16 border-b border-transparent text-right outline-none bg-transparent font-black">
+                                            $<input v-model.number="item.price" @change="broadcastItemUpdate(item)" type="number" class="w-16 border-b border-transparent text-right outline-none bg-transparent font-black">
                                         </td>
                                         <td class="p-3 text-center">
                                             <button @click="deleteItem(idx)" class="text-red-300 hover:text-red-500 text-lg font-bold">✕</button>
@@ -353,7 +353,7 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Description</label>
-                                <input v-model="bundleForm.desc" placeholder="e.g. T-Shirt + Tote Bag with Keychain + Patch + Socks Set" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
+                                <input v-model="bundleForm.desc" placeholder="e.g. T-Shirt + Bag Choice + Patch + Socks Set" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
                             </div>
                         </div>
 
@@ -753,6 +753,25 @@
                     </span>
                 </div>
 
+                <!-- Bag Choice for Everything Bundle ($380 Unchanged) -->
+                <div v-if="customizingBundle.id === 'b1' || (customizingBundle.name && customizingBundle.name.includes('福袋'))" class="bg-slate-50 p-4 rounded-2xl border space-y-2">
+                    <p class="text-xs font-black uppercase text-indigo-950">Select Bag Choice ($380 Price Unchanged):</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="bundleOptions.bagChoice = 'combo'"
+                            :class="bundleOptions.bagChoice === 'combo' ? 'bg-indigo-600 text-white font-bold' : 'bg-white border text-slate-700'"
+                            class="p-2.5 rounded-xl text-xs transition text-left">
+                            <div class="font-black">帆布袋連鎖匙扣</div>
+                            <div class="text-[9px] opacity-80">Tote Bag with Keychain</div>
+                        </button>
+                        <button @click="bundleOptions.bagChoice = 'single'"
+                            :class="bundleOptions.bagChoice === 'single' ? 'bg-indigo-600 text-white font-bold' : 'bg-white border text-slate-700'"
+                            class="p-2.5 rounded-xl text-xs transition text-left">
+                            <div class="font-black">純帆布袋 (Tote Only)</div>
+                            <div class="text-[9px] opacity-80">Tote Bag without Keychain</div>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- T-Shirt Style & Size Choices -->
                 <div v-if="customizingBundle.requiresShirt > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-3">
                     <p class="text-xs font-black uppercase text-indigo-950">Select T-Shirt Options ($150 Standard):</p>
@@ -761,8 +780,8 @@
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Shirt Design:</label>
                         <select v-model="bundleOptions.shirtStyle" class="w-full border rounded-xl p-2 text-xs font-bold bg-white">
-                            <option value="T-Shirt (Black)">黑色圖案T恤 -  T-Shirt (Black)</option>
-                            <option value="T-Shirt (White)">白色圖案T恤 -  T-Shirt (White)</option>
+                            <option value="Graphic T-Shirt (Black)">黑色圖案T恤 - Graphic T-Shirt (Black)</option>
+                            <option value="Graphic T-Shirt (White)">白色圖案T恤 - Graphic T-Shirt (White)</option>
                             <option value="Music · Connect T-Shirt">《音樂點連結》T恤 - Music · Connect T-Shirt</option>
                         </select>
                     </div>
@@ -781,7 +800,7 @@
                     </div>
                 </div>
 
-                <!-- Included Fixed Products (Patches, Tote Bag with Keychain, etc.) -->
+                <!-- Included Fixed Products (Patches, etc.) -->
                 <div v-if="customizingBundle.components && customizingBundle.components.length > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-1.5">
                     <p class="text-[10px] font-black uppercase text-indigo-950">Included Merchandise:</p>
                     <div class="space-y-1">
@@ -814,28 +833,28 @@
 const initPOS = () => {
     const { createApp, ref, computed, watch, onMounted } = Vue;
 
-    // EXACT INITIAL ITEMS (NO STANDALONE BAG, SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150)
+    // EXACT INITIAL ITEMS (SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150, TOTE ONLY $120)
     const INITIAL_ITEMS = [
         // SOCKS (Item 5: $50 each pair)
         { id: 1, category: 'Socks', name: 'Socks (White)', style: 'White', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
         { id: 2, category: 'Socks', name: 'Socks (Grey)', style: 'Grey', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
         { id: 3, category: 'Socks', name: 'Socks (Black)', style: 'Black', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
         
-        //  T-SHIRT (BLACK) - $150 (Item 3, 6 individual size boxes)
-        { id: 201, category: 'T-Shirts', name: ' T-Shirt (Black) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 202, category: 'T-Shirts', name: ' T-Shirt (Black) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 203, category: 'T-Shirts', name: ' T-Shirt (Black) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
-        { id: 204, category: 'T-Shirts', name: ' T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 205, category: 'T-Shirts', name: ' T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 206, category: 'T-Shirts', name: ' T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        // GRAPHIC T-SHIRT (BLACK) - $150 (Item 3, 6 individual size boxes)
+        { id: 201, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 202, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 203, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
+        { id: 204, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 205, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 206, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
 
-        //  T-SHIRT (WHITE) - $150 (Item 4, 6 individual size boxes)
-        { id: 301, category: 'T-Shirts', name: ' T-Shirt (White) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 302, category: 'T-Shirts', name: ' T-Shirt (White) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 303, category: 'T-Shirts', name: ' T-Shirt (White) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
-        { id: 304, category: 'T-Shirts', name: ' T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 305, category: 'T-Shirts', name: ' T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 306, category: 'T-Shirts', name: ' T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        // GRAPHIC T-SHIRT (WHITE) - $150 (Item 4, 6 individual size boxes)
+        { id: 301, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 302, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 303, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
+        { id: 304, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 305, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 306, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
 
         // MUSIC · CONNECT T-SHIRT - $150 (Item 2, 6 individual size boxes)
         { id: 101, category: 'T-Shirts', name: 'Music · Connect T-Shirt - S', style: 'Size S', price: 150, cost: 0, stocks: 45, boxSize: 6, image: '' },
@@ -845,25 +864,25 @@ const initPOS = () => {
         { id: 105, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 45, boxSize: 6, image: '' },
         { id: 106, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 45, boxSize: 6, image: '' },
 
-        // MERCHANDISE (Tote with Keychain $150, Keychain $20, Velcro Patch $40)
-        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 0, stocks: 200, boxSize: 3, image: '' },
+        // MERCHANDISE
+        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 0, stocks: 200, boxSize: 1, image: '' },
+        { id: 10, category: 'Merchandise', name: 'Tote Bag (帆布袋)', style: 'Black Graphic', price: 120, cost: 0, stocks: 200, boxSize: 1, image: '' },
         { id: 7, category: 'Merchandise', name: 'Keychain (鎖匙扣)', style: 'Trombone Keychain', price: 20, cost: 0, stocks: 300, boxSize: 3, image: '' },
         { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: 0, stocks: 300, boxSize: 3, image: '' }
     ];
 
-    // INITIAL BUNDLES (Everything Bundle $380, Socks Set $120) - $50 preset bundle removed
+    // INITIAL BUNDLES (Everything Bundle $380, Socks Set $120)
     const INITIAL_BUNDLES = [
         { 
             id: 'b1', 
             name: '福袋 (Everything Bundle)', 
             price: 380, 
-            desc: 'T-Shirt (any design) + Tote Bag with Keychain + Velcro Patch + Socks (Set of 3 colors: White, Grey, Black)',
+            desc: 'T-Shirt (any design) + Bag Choice (Combo or Tote) + Velcro Patch + Socks (Set of 3 colors: White, Grey, Black)',
             requiresSocks: 3,
             sockColors: ['White', 'Grey', 'Black'],
             requiresShirt: 1,
             components: [
-                { itemId: 6, qty: 1 }, // Tote Bag with Keychain ($150)
-                { itemId: 8, qty: 1 }  // Velcro Patch ($40)
+                { itemId: 8, qty: 1 } // Velcro Patch ($40)
             ]
         },
         { 
@@ -878,11 +897,11 @@ const initPOS = () => {
         }
     ];
 
-    // Storage Migration
+    // Storage Migration with Non-Destructive Fallbacks
     const migrateAndLoadData = () => {
-        const itemKeys = ['mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40', 'mc_pos_items_v38', 'mc_pos_items_v37', 'mc_pos_items_v36', 'mc_pos_items_v35'];
-        const salesKeys = ['mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40', 'mc_pos_sales_v38', 'mc_pos_sales_v37', 'mc_pos_sales_v36', 'mc_pos_sales_v35'];
-        const bundleKeys = ['mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40', 'mc_pos_bundles_v38', 'mc_pos_bundles_v37', 'mc_pos_bundles_v36', 'mc_pos_bundles_v35'];
+        const itemKeys = ['mc_pos_app_items_v45', 'mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40', 'mc_pos_items_v38', 'mc_pos_items_v37'];
+        const salesKeys = ['mc_pos_app_sales_v45', 'mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40', 'mc_pos_sales_v38', 'mc_pos_sales_v37'];
+        const bundleKeys = ['mc_pos_app_bundles_v45', 'mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40', 'mc_pos_bundles_v38', 'mc_pos_bundles_v37'];
 
         let loadedItems = null;
         for (let k of itemKeys) {
@@ -955,86 +974,180 @@ const initPOS = () => {
             const bundleForm = ref({ name: '', price: 0, desc: '', requiresSocks: 0, sockColors: ['White', 'Grey', 'Black'], requiresShirt: 0, components: [] });
             const customizingBundle = ref(null);
             const bundleOptions = ref({
-                shirtStyle: ' T-Shirt (Black)',
+                bagChoice: 'combo',
+                shirtStyle: 'Graphic T-Shirt (Black)',
                 shirtSize: 'L'
             });
 
             // Master Storage Sync
             watch([items, sales, bundles], () => {
                 try {
-                    localStorage.setItem('mc_pos_app_items_v41', JSON.stringify(items.value));
-                    localStorage.setItem('mc_pos_app_sales_v41', JSON.stringify(sales.value));
-                    localStorage.setItem('mc_pos_app_bundles_v41', JSON.stringify(bundles.value));
+                    localStorage.setItem('mc_pos_app_items_v45', JSON.stringify(items.value));
+                    localStorage.setItem('mc_pos_app_sales_v45', JSON.stringify(sales.value));
+                    localStorage.setItem('mc_pos_app_bundles_v45', JSON.stringify(bundles.value));
                 } catch(e) {}
             }, { deep: true });
 
             // ============================================================
-            // DYNAMIC REAL-TIME CROSS-DEVICE SYNCHRONIZATION ENGINE
+            // SMART NON-DESTRUCTIVE EVENT-DRIVEN SYNC ENGINE
             // ============================================================
             const deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
-            const syncRoom = 'music_connect_pos_live_sync_room';
+            const syncRoom = 'music_connect_pos_live_sync_room_v45';
             let mqttClient = null;
 
-            const broadcastStateUpdate = (actionType) => {
+            // Merges sales by ID union (prevents overwriting concurrent sales)
+            const mergeSales = (incomingSales) => {
+                if (!Array.isArray(incomingSales)) return;
+                const map = new Map(sales.value.map(s => [s.id, s]));
+                incomingSales.forEach(s => {
+                    if (s && s.id && !map.has(s.id)) {
+                        map.set(s.id, s);
+                    }
+                });
+                sales.value = Array.from(map.values()).sort((a, b) => b.id - a.id);
+            };
+
+            // Merges items preserving uploaded photos
+            const mergeItems = (incomingItems) => {
+                if (!Array.isArray(incomingItems) || incomingItems.length === 0) return;
+                const map = new Map();
+                incomingItems.forEach(i => { if (i && i.id) map.set(i.id, { ...i }); });
+                items.value.forEach(i => {
+                    if (i && i.id) {
+                        if (map.has(i.id)) {
+                            const target = map.get(i.id);
+                            if (i.image && !target.image) target.image = i.image;
+                        } else {
+                            map.set(i.id, { ...i });
+                        }
+                    }
+                });
+                items.value = Array.from(map.values());
+            };
+
+            const broadcastEvent = (actionType, eventData = {}) => {
                 const payload = {
                     senderId: deviceId,
                     action: actionType,
                     timestamp: Date.now(),
-                    items: items.value,
-                    sales: sales.value,
-                    bundles: bundles.value
+                    ...eventData
                 };
 
-                // 1. Same-device tab sync
+                // Local Tab Broadcast
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel');
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v45');
                         bc.postMessage(payload);
                     } catch(e) {}
                 }
 
-                // 2. Cross-device WebSocket sync
+                // Remote Cross-Device WebSocket Broadcast
                 if (mqttClient && mqttClient.isConnected && mqttClient.isConnected()) {
                     try {
                         const message = new Paho.MQTT.Message(JSON.stringify(payload));
-                        message.destinationName = `mc_pos_sync/${syncRoom}/update`;
+                        message.destinationName = `mc_pos_sync/${syncRoom}/events`;
                         message.qos = 1;
                         mqttClient.send(message);
+
+                        // Also publish full retained state so future joiners get current data
+                        const stateMsg = new Paho.MQTT.Message(JSON.stringify({
+                            senderId: deviceId,
+                            action: 'STATE_RESPONSE',
+                            items: items.value,
+                            sales: sales.value,
+                            bundles: bundles.value
+                        }));
+                        stateMsg.destinationName = `mc_pos_sync/${syncRoom}/state`;
+                        stateMsg.retained = true;
+                        stateMsg.qos = 1;
+                        mqttClient.send(stateMsg);
                     } catch(e) {}
                 }
             };
 
-            const handleIncomingSync = (data) => {
-                if (!data) return;
-                if (data.items && Array.isArray(data.items)) items.value = data.items;
-                if (data.sales && Array.isArray(data.sales)) sales.value = data.sales;
-                if (data.bundles && Array.isArray(data.bundles)) bundles.value = data.bundles;
+            const handleIncomingPayload = (data) => {
+                if (!data || data.senderId === deviceId) return;
+
+                switch (data.action) {
+                    case 'NEW_SALE':
+                        if (data.sale && !sales.value.find(s => s.id === data.sale.id)) {
+                            sales.value.unshift(data.sale);
+                            // Apply stock deductions
+                            if (data.deductions && Array.isArray(data.deductions)) {
+                                data.deductions.forEach(d => {
+                                    const inv = items.value.find(x => x.id === d.itemId);
+                                    if (inv) inv.stocks -= d.qty;
+                                });
+                            }
+                        }
+                        break;
+
+                    case 'DELETE_SALE':
+                        if (data.saleId) {
+                            sales.value = sales.value.filter(s => s.id !== data.saleId);
+                            // Restore stocks
+                            if (data.restorations && Array.isArray(data.restorations)) {
+                                data.restorations.forEach(r => {
+                                    const inv = items.value.find(x => x.id === r.itemId);
+                                    if (inv) inv.stocks += r.qty;
+                                });
+                            }
+                        }
+                        break;
+
+                    case 'IMAGE_UPLOADED':
+                        if (data.itemId) {
+                            const it = items.value.find(x => x.id === data.itemId);
+                            if (it) it.image = data.image;
+                        }
+                        break;
+
+                    case 'ITEM_UPDATED':
+                        if (data.item) {
+                            const idx = items.value.findIndex(x => x.id === data.item.id);
+                            if (idx > -1) {
+                                const curImg = items.value[idx].image;
+                                items.value[idx] = { ...data.item, image: data.item.image || curImg };
+                            }
+                        }
+                        break;
+
+                    case 'REQUEST_STATE':
+                        // Online peer asked for state -> respond immediately
+                        broadcastEvent('STATE_RESPONSE', {
+                            targetId: data.senderId,
+                            items: items.value,
+                            sales: sales.value,
+                            bundles: bundles.value
+                        });
+                        break;
+
+                    case 'STATE_RESPONSE':
+                        // Received state from peer or retained cache
+                        if (data.items) mergeItems(data.items);
+                        if (data.sales) mergeSales(data.sales);
+                        if (data.bundles && Array.isArray(data.bundles)) bundles.value = data.bundles;
+                        break;
+
+                    case 'DATA_RESTORED':
+                    case 'FACTORY_RESET':
+                        if (data.items) items.value = data.items;
+                        if (data.sales) sales.value = data.sales;
+                        if (data.bundles) bundles.value = data.bundles;
+                        break;
+                }
             };
 
             const setupLiveSync = () => {
-                // Local broadcast listener
+                // Local Tab Channel
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel');
-                        bc.onmessage = (ev) => {
-                            if (ev.data && ev.data.senderId !== deviceId) {
-                                handleIncomingSync(ev.data);
-                            }
-                        };
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v45');
+                        bc.onmessage = (ev) => handleIncomingPayload(ev.data);
                     } catch(e) {}
                 }
 
-                // Local storage fallback listener
-                window.addEventListener('storage', (e) => {
-                    if (e.key === 'mc_pos_app_sales_v41' || e.key === 'mc_pos_app_items_v41' || e.key === 'mc_pos_app_bundles_v41') {
-                        const migrated = migrateAndLoadData();
-                        items.value = migrated.items;
-                        sales.value = migrated.sales;
-                        bundles.value = migrated.bundles;
-                    }
-                });
-
-                // Remote Cross-Device WebSocket Sync
+                // Multi-Device MQTT WebSockets
                 if (typeof Paho !== 'undefined' && Paho.MQTT) {
                     try {
                         const client = new Paho.MQTT.Client('broker.emqx.io', 8084, 'pos_' + deviceId);
@@ -1047,9 +1160,7 @@ const initPOS = () => {
                         client.onMessageArrived = (message) => {
                             try {
                                 const payload = JSON.parse(message.payloadString);
-                                if (payload && payload.senderId !== deviceId) {
-                                    handleIncomingSync(payload);
-                                }
+                                handleIncomingPayload(payload);
                             } catch (e) {}
                         };
 
@@ -1061,10 +1172,12 @@ const initPOS = () => {
                                 onSuccess: () => {
                                     syncStatus.value = 'Live Synced';
                                     client.subscribe(`mc_pos_sync/${syncRoom}/#`);
+                                    // Send handshake request to online peers
+                                    broadcastEvent('REQUEST_STATE');
                                 },
                                 onFailure: () => {
                                     syncStatus.value = 'Live Synced (Local)';
-                                    setTimeout(connectMqtt, 6000);
+                                    setTimeout(connectMqtt, 5000);
                                 }
                             });
                         };
@@ -1167,7 +1280,6 @@ const initPOS = () => {
                 return 'h-32 md:h-36';
             };
 
-            // Dynamic Cost Calculator
             const calculateSaleCost = (s) => {
                 if (!s || !s.rawCart || !Array.isArray(s.rawCart)) return 0;
                 let totalCost = 0;
@@ -1185,7 +1297,7 @@ const initPOS = () => {
                 return totalCost;
             };
 
-            // AUTO BUNDLE MATCHING
+            // AUTO BUNDLE MATCHING (GREEDY LARGEST SAVINGS FIRST)
             const autoBundleMatches = computed(() => {
                 let poolWhiteSocks = 0;
                 let poolGreySocks = 0;
@@ -1236,6 +1348,7 @@ const initPOS = () => {
 
                     let maxCount = Infinity;
 
+                    // Match socks by specific required colors
                     if (b.requiresSocks > 0) {
                         if (b.sockColors && b.sockColors.length > 0) {
                             if (b.sockColors.includes('White')) maxCount = Math.min(maxCount, poolWhiteSocks);
@@ -1250,7 +1363,12 @@ const initPOS = () => {
                         maxCount = Math.min(maxCount, Math.floor(poolShirts / b.requiresShirt));
                     }
 
-                    if (b.components && b.components.length > 0) {
+                    // For Everything Bundle, either Bag combo (ID 6) OR Bag single (ID 10) qualifies!
+                    if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
+                        const totalBagsAvailable = (poolItems[6] || 0) + (poolItems[10] || 0);
+                        const patchAvailable = poolItems[8] || 0;
+                        maxCount = Math.min(maxCount, totalBagsAvailable, patchAvailable);
+                    } else if (b.components && b.components.length > 0) {
                         b.components.forEach(cp => {
                             const available = poolItems[cp.itemId] || 0;
                             maxCount = Math.min(maxCount, Math.floor(available / (Number(cp.qty) || 1)));
@@ -1263,6 +1381,7 @@ const initPOS = () => {
                             savings: maxCount * item.savings
                         });
 
+                        // Consume matched items
                         if (b.requiresSocks > 0) {
                             if (b.sockColors && b.sockColors.length > 0) {
                                 if (b.sockColors.includes('White')) poolWhiteSocks -= maxCount;
@@ -1278,7 +1397,14 @@ const initPOS = () => {
 
                         if (b.requiresShirt > 0) poolShirts -= maxCount * b.requiresShirt;
 
-                        if (b.components && b.components.length > 0) {
+                        if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
+                            let bagsNeeded = maxCount;
+                            const take6 = Math.min(poolItems[6] || 0, bagsNeeded);
+                            if (poolItems[6]) poolItems[6] -= take6;
+                            bagsNeeded -= take6;
+                            if (bagsNeeded > 0 && poolItems[10]) poolItems[10] -= bagsNeeded;
+                            if (poolItems[8]) poolItems[8] -= maxCount; // Patch
+                        } else if (b.components && b.components.length > 0) {
                             b.components.forEach(cp => {
                                 poolItems[cp.itemId] = (poolItems[cp.itemId] || 0) - (maxCount * (Number(cp.qty) || 1));
                             });
@@ -1387,7 +1513,8 @@ const initPOS = () => {
             const openBundleCustomizer = (bundle) => {
                 customizingBundle.value = bundle;
                 bundleOptions.value = {
-                    shirtStyle: ' T-Shirt (Black)',
+                    bagChoice: 'combo',
+                    shirtStyle: 'Graphic T-Shirt (Black)',
                     shirtSize: 'L'
                 };
             };
@@ -1431,7 +1558,18 @@ const initPOS = () => {
                     descParts.push(`Shirt: ${styleKey} (${sizeKey})`);
                 }
 
-                // 3. Linked Merchandise Items
+                // 3. Bag Selection for Everything Bundle
+                if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
+                    if (bundleOptions.value.bagChoice === 'single') {
+                        components.push({ itemId: 10, qty: 1 }); // Tote Bag only ($120)
+                        descParts.push('Bag: 純帆布袋');
+                    } else {
+                        components.push({ itemId: 6, qty: 1 }); // Tote Bag with Keychain ($150)
+                        descParts.push('Bag: 帆布袋連鎖匙扣');
+                    }
+                }
+
+                // 4. Linked Merchandise Items
                 if (b.components && b.components.length > 0) {
                     b.components.forEach(comp => {
                         components.push({ itemId: comp.itemId, qty: comp.qty });
@@ -1455,17 +1593,26 @@ const initPOS = () => {
 
             const completeSale = () => {
                 const snap = JSON.parse(JSON.stringify(cart.value));
-                
-                // Deduct stock
+                const deductions = [];
+
+                // Deduct stock locally and collect delta list
                 snap.forEach(c => {
                     if (c.isBundle) {
                         (c.components || []).forEach(comp => {
                             const inv = items.value.find(x => x.id === comp.itemId);
-                            if (inv) inv.stocks -= (comp.qty * c.qty);
+                            if (inv) {
+                                const q = (Number(comp.qty) || 1) * (Number(c.qty) || 1);
+                                inv.stocks -= q;
+                                deductions.push({ itemId: comp.itemId, qty: q });
+                            }
                         });
                     } else if (!c.isDirectDonation) {
                         const inv = items.value.find(x => x.id === c.id);
-                        if (inv) inv.stocks -= c.qty;
+                        if (inv) {
+                            const q = Number(c.qty) || 1;
+                            inv.stocks -= q;
+                            deductions.push({ itemId: c.id, qty: q });
+                        }
                     }
                 });
 
@@ -1475,11 +1622,10 @@ const initPOS = () => {
                 const billTotal = Number(cartFinalTotal.value);
                 const productSalesOnly = Math.max(0, billTotal - directDonationSum);
                 const totalMoneyReceived = billTotal + changeDonationAmt;
-
                 const totalDiscountForSale = Number(autoBundleSavingsTotal.value || 0) + (Number(discount.value) || 0);
                 const txCost = calculateSaleCost({ rawCart: snap });
 
-                sales.value.unshift({
+                const newSale = {
                     id: Date.now(),
                     time: new Date().toLocaleString(),
                     status: 'Completed',
@@ -1495,37 +1641,54 @@ const initPOS = () => {
                     change: changeAmount.value,
                     isDonation: isDonation.value,
                     rawCart: snap
-                });
+                };
+
+                sales.value.unshift(newSale);
 
                 cart.value = [];
                 discount.value = 0;
                 customerPaid.value = 0;
                 isDonation.value = false;
 
-                // Real-time broadcast
-                broadcastStateUpdate('SALE_COMPLETED');
+                // Broadcast Delta Event to all devices
+                broadcastEvent('NEW_SALE', { sale: newSale, deductions });
                 alert("Transaction completed successfully!");
             };
 
             const deleteAndReturnStock = (idx) => {
                 if (!confirm("Are you sure you want to delete this sale and restore its stock to inventory?")) return;
                 const rec = sales.value[idx];
+                const restorations = [];
                 
                 if (rec.rawCart) {
                     rec.rawCart.forEach(c => {
                         if (c.isBundle) {
                             (c.components || []).forEach(comp => {
                                 const inv = items.value.find(x => x.id === comp.itemId);
-                                if (inv) inv.stocks += (comp.qty * c.qty);
+                                if (inv) {
+                                    const q = (Number(comp.qty) || 1) * (Number(c.qty) || 1);
+                                    inv.stocks += q;
+                                    restorations.push({ itemId: comp.itemId, qty: q });
+                                }
                             });
                         } else if (!c.isDirectDonation) {
                             const inv = items.value.find(x => x.id === c.id);
-                            if (inv) inv.stocks += c.qty;
+                            if (inv) {
+                                const q = Number(c.qty) || 1;
+                                inv.stocks += q;
+                                restorations.push({ itemId: c.id, qty: q });
+                            }
                         }
                     });
                 }
+                
+                const deletedId = rec.id;
                 sales.value.splice(idx, 1);
-                broadcastStateUpdate('SALE_DELETED');
+                broadcastEvent('DELETE_SALE', { saleId: deletedId, restorations });
+            };
+
+            const broadcastItemUpdate = (item) => {
+                broadcastEvent('ITEM_UPDATED', { item });
             };
 
             const uploadImage = (e, item) => {
@@ -1537,7 +1700,7 @@ const initPOS = () => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_SIZE = 360;
+                        const MAX_SIZE = 320;
                         let width = img.width;
                         let height = img.height;
                         if (width > height) {
@@ -1549,8 +1712,8 @@ const initPOS = () => {
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        item.image = canvas.toDataURL('image/jpeg', 0.8);
-                        broadcastStateUpdate('IMAGE_UPLOADED');
+                        item.image = canvas.toDataURL('image/jpeg', 0.75);
+                        broadcastEvent('IMAGE_UPLOADED', { itemId: item.id, image: item.image });
                     };
                     img.src = event.target.result;
                 };
@@ -1605,8 +1768,9 @@ const initPOS = () => {
             };
 
             const deleteBundle = (idx) => {
+                const bId = bundles.value[idx].id;
                 bundles.value.splice(idx, 1);
-                broadcastStateUpdate('BUNDLE_DELETED');
+                broadcastEvent('BUNDLE_DELETED', { bundleId: bId });
             };
 
             const saveBundle = () => {
@@ -1635,7 +1799,7 @@ const initPOS = () => {
                     });
                 }
                 resetBundleForm();
-                broadcastStateUpdate('BUNDLE_SAVED');
+                broadcastEvent('STATE_RESPONSE', { items: items.value, sales: sales.value, bundles: bundles.value });
             };
 
             const resetBundleForm = () => {
@@ -1644,7 +1808,7 @@ const initPOS = () => {
             };
 
             const addNewItem = () => {
-                items.value.unshift({
+                const newItem = {
                     id: Date.now(),
                     category: 'T-Shirts',
                     name: 'New Product',
@@ -1654,8 +1818,16 @@ const initPOS = () => {
                     stocks: 50,
                     boxSize: 6,
                     image: ''
-                });
-                broadcastStateUpdate('ITEM_ADDED');
+                };
+                items.value.unshift(newItem);
+                broadcastEvent('ITEM_UPDATED', { item: newItem });
+            };
+
+            const deleteItem = (idx) => {
+                if (confirm("Delete this product?")) {
+                    items.value.splice(idx, 1);
+                    broadcastEvent('STATE_RESPONSE', { items: items.value, sales: sales.value, bundles: bundles.value });
+                }
             };
 
             // CSV & EXCEL EXPORTS
@@ -1851,7 +2023,7 @@ const initPOS = () => {
                             items.value = data.items;
                             bundles.value = data.bundles;
                             sales.value = data.sales;
-                            broadcastStateUpdate('DATA_RESTORED');
+                            broadcastEvent('DATA_RESTORED', { items: items.value, sales: sales.value, bundles: bundles.value });
                             alert("✅ Data successfully restored from backup!");
                         }
                     } catch (err) {
@@ -1892,7 +2064,7 @@ const initPOS = () => {
             const resetData = () => {
                 if (confirm("Reset everything to default PDF values? All records and uploads will be reset.")) {
                     localStorage.clear();
-                    broadcastStateUpdate('FACTORY_RESET');
+                    broadcastEvent('FACTORY_RESET', { items: [...INITIAL_ITEMS], sales: [], bundles: [...INITIAL_BUNDLES] });
                     window.location.reload();
                 }
             };
@@ -1906,10 +2078,10 @@ const initPOS = () => {
                 getBoxSpanClass, getImageHeightClass, getItemColorClasses, getSizeBadgeClass,
                 addToCart, increaseCartQty, decreaseCartQty, addDirectDonation,
                 openBundleCustomizer, addConfiguredBundleToCart,
-                completeSale, deleteAndReturnStock,
+                completeSale, deleteAndReturnStock, broadcastItemUpdate,
                 uploadImage, toggleBundleSockColor, isSockColorSelected, getBundleFormCompQty, adjustBundleFormComp, 
                 editBundle, deleteBundle, saveBundle, resetBundleForm,
-                addNewItem, exportTransactionsCSV, exportInventoryCSV, exportDailySummaryCSV, exportBackupJSON, importBackupJSON, exportExcel, resetData
+                addNewItem, deleteItem, exportTransactionsCSV, exportInventoryCSV, exportDailySummaryCSV, exportBackupJSON, importBackupJSON, exportExcel, resetData
             };
         }
     }).mount('#app');
