@@ -807,38 +807,38 @@ const initPOS = () => {
     // EXACT INITIAL ITEMS (NO STANDALONE BAG, SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150)
     const INITIAL_ITEMS = [
         // SOCKS (Item 5: $50 each pair)
-        { id: 1, category: 'Socks', name: 'Socks (White)', style: 'White', price: 50, cost: 14, stocks: 100, boxSize: 3, image: '' },
-        { id: 2, category: 'Socks', name: 'Socks (Grey)', style: 'Grey', price: 50, cost: 14, stocks: 100, boxSize: 3, image: '' },
-        { id: 3, category: 'Socks', name: 'Socks (Black)', style: 'Black', price: 50, cost: 14, stocks: 100, boxSize: 3, image: '' },
+        { id: 1, category: 'Socks', name: 'Socks (White)', style: 'White', price: 50, cost: , stocks: 100, boxSize: 3, image: '' },
+        { id: 2, category: 'Socks', name: 'Socks (Grey)', style: 'Grey', price: 50, cost: , stocks: 100, boxSize: 3, image: '' },
+        { id: 3, category: 'Socks', name: 'Socks (Black)', style: 'Black', price: 50, cost: , stocks: 100, boxSize: 3, image: '' },
         
         // GRAPHIC T-SHIRT (BLACK) - $150 (Item 3, 6 individual size boxes)
-        { id: 201, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - S', style: 'Size S', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
-        { id: 202, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - M', style: 'Size M', price: 150, cost: 52.8, stocks: 35, boxSize: 6, image: '' },
-        { id: 203, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - L', style: 'Size L', price: 150, cost: 52.8, stocks: 40, boxSize: 6, image: '' },
-        { id: 204, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: 52.8, stocks: 35, boxSize: 6, image: '' },
-        { id: 205, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
-        { id: 206, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
+        { id: 201, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - S', style: 'Size S', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
+        { id: 202, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - M', style: 'Size M', price: 150, cost: , stocks: 35, boxSize: 6, image: '' },
+        { id: 203, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - L', style: 'Size L', price: 150, cost: , stocks: 40, boxSize: 6, image: '' },
+        { id: 204, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: , stocks: 35, boxSize: 6, image: '' },
+        { id: 205, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
+        { id: 206, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
 
         // GRAPHIC T-SHIRT (WHITE) - $150 (Item 4, 6 individual size boxes)
-        { id: 301, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - S', style: 'Size S', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
-        { id: 302, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - M', style: 'Size M', price: 150, cost: 52.8, stocks: 35, boxSize: 6, image: '' },
-        { id: 303, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - L', style: 'Size L', price: 150, cost: 52.8, stocks: 40, boxSize: 6, image: '' },
-        { id: 304, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: 52.8, stocks: 35, boxSize: 6, image: '' },
-        { id: 305, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
-        { id: 306, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: 52.8, stocks: 30, boxSize: 6, image: '' },
+        { id: 301, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - S', style: 'Size S', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
+        { id: 302, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - M', style: 'Size M', price: 150, cost: , stocks: 35, boxSize: 6, image: '' },
+        { id: 303, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - L', style: 'Size L', price: 150, cost: , stocks: 40, boxSize: 6, image: '' },
+        { id: 304, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: , stocks: 35, boxSize: 6, image: '' },
+        { id: 305, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
+        { id: 306, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: , stocks: 30, boxSize: 6, image: '' },
 
         // MUSIC · CONNECT T-SHIRT - $150 (Item 2, 6 individual size boxes)
-        { id: 101, category: 'T-Shirts', name: 'Music · Connect T-Shirt - S', style: 'Size S', price: 150, cost: 38.3, stocks: 45, boxSize: 6, image: '' },
-        { id: 102, category: 'T-Shirts', name: 'Music · Connect T-Shirt - M', style: 'Size M', price: 150, cost: 38.3, stocks: 50, boxSize: 6, image: '' },
-        { id: 103, category: 'T-Shirts', name: 'Music · Connect T-Shirt - L', style: 'Size L', price: 150, cost: 38.3, stocks: 55, boxSize: 6, image: '' },
-        { id: 104, category: 'T-Shirts', name: 'Music · Connect T-Shirt - XL', style: 'Size XL', price: 150, cost: 38.3, stocks: 50, boxSize: 6, image: '' },
-        { id: 105, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 2XL', style: 'Size 2XL', price: 150, cost: 38.3, stocks: 45, boxSize: 6, image: '' },
-        { id: 106, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 3XL', style: 'Size 3XL', price: 150, cost: 38.3, stocks: 45, boxSize: 6, image: '' },
+        { id: 101, category: 'T-Shirts', name: 'Music · Connect T-Shirt - S', style: 'Size S', price: 150, cost: , stocks: 45, boxSize: 6, image: '' },
+        { id: 102, category: 'T-Shirts', name: 'Music · Connect T-Shirt - M', style: 'Size M', price: 150, cost: , stocks: 50, boxSize: 6, image: '' },
+        { id: 103, category: 'T-Shirts', name: 'Music · Connect T-Shirt - L', style: 'Size L', price: 150, cost: , stocks: 55, boxSize: 6, image: '' },
+        { id: 104, category: 'T-Shirts', name: 'Music · Connect T-Shirt - XL', style: 'Size XL', price: 150, cost: , stocks: 50, boxSize: 6, image: '' },
+        { id: 105, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 2XL', style: 'Size 2XL', price: 150, cost: , stocks: 45, boxSize: 6, image: '' },
+        { id: 106, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 3XL', style: 'Size 3XL', price: 150, cost: , stocks: 45, boxSize: 6, image: '' },
 
         // MERCHANDISE (Tote with Keychain $150, Keychain $20, Velcro Patch $40)
-        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 28, stocks: 200, boxSize: 1, image: '' },
-        { id: 7, category: 'Merchandise', name: 'Keychain (鎖匙扣)', style: 'Trombone Keychain', price: 20, cost: 11.7, stocks: 300, boxSize: 3, image: '' },
-        { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: 9.3, stocks: 300, boxSize: 3, image: '' }
+        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: , stocks: 200, boxSize: 1, image: '' },
+        { id: 7, category: 'Merchandise', name: 'Keychain (鎖匙扣)', style: 'Trombone Keychain', price: 20, cost: , stocks: 300, boxSize: 3, image: '' },
+        { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: , stocks: 300, boxSize: 3, image: '' }
     ];
 
     // INITIAL BUNDLES (Everything Bundle $380, Socks Set $120) - $50 preset bundle removed
