@@ -73,9 +73,9 @@
             <span class="text-xl">🎷</span>
             <h1 class="font-black italic tracking-tighter text-sm md:text-base uppercase">Music Connect POS</h1>
             <!-- Dynamic Sync Indicator -->
-            <span class="text-[9px] font-black px-2 py-0.5 rounded-full flex items-center space-x-1.5"
-                  :class="syncStatus === 'Live Synced' ? 'bg-emerald-900/80 text-emerald-300 border border-emerald-500/30' : 'bg-indigo-900 text-slate-300'">
-                <span class="w-1.5 h-1.5 rounded-full" :class="syncStatus === 'Live Synced' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+            <span class="text-[9px] font-black px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 transition-all"
+                  :class="syncStatus.includes('Live') ? 'bg-emerald-900/80 text-emerald-300 border border-emerald-500/30' : 'bg-indigo-900 text-slate-300'">
+                <span class="w-1.5 h-1.5 rounded-full" :class="syncStatus.includes('Live') ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
                 <span>{{ syncStatus }}</span>
             </span>
         </div>
@@ -246,7 +246,7 @@
                 </div>
 
                 <!-- ========================================== -->
-                <!-- VIEW 3: INVENTORY (ITEMS & BUNDLES CONFIG) -->
+                <!-- VIEW 3: INVENTORY (ITEMS & BOX SIZES 1-7) -->
                 <!-- ========================================== -->
                 <div v-if="view === 'stk'" class="space-y-6">
                     <!-- Products Table -->
@@ -321,7 +321,7 @@
                                             $<input v-model.number="item.price" type="number" class="w-16 border-b border-transparent text-right outline-none bg-transparent font-black">
                                         </td>
                                         <td class="p-3 text-center">
-                                            <button @click="items.splice(idx,1)" class="text-red-300 hover:text-red-500 text-lg font-bold">✕</button>
+                                            <button @click="deleteItem(idx)" class="text-red-300 hover:text-red-500 text-lg font-bold">✕</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -444,7 +444,7 @@
                 <!-- ========================================== -->
                 <div v-if="view === 'bal'" class="space-y-4">
                     
-                    <!-- Row 1: Payment Method Inflows (Now 5 Columns including Bank Transfer) -->
+                    <!-- Row 1: Payment Method Inflows -->
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5">
                         <div class="bg-indigo-950 text-white p-3.5 rounded-2xl shadow border border-indigo-900 flex flex-col justify-between">
                             <div>
@@ -761,8 +761,8 @@
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Shirt Design:</label>
                         <select v-model="bundleOptions.shirtStyle" class="w-full border rounded-xl p-2 text-xs font-bold bg-white">
-                            <option value="Graphic T-Shirt (Black)">黑色圖案T恤 - Graphic T-Shirt (Black)</option>
-                            <option value="Graphic T-Shirt (White)">白色圖案T恤 - Graphic T-Shirt (White)</option>
+                            <option value="T-Shirt (Black)">黑色圖案T恤 -  T-Shirt (Black)</option>
+                            <option value="T-Shirt (White)">白色圖案T恤 -  T-Shirt (White)</option>
                             <option value="Music · Connect T-Shirt">《音樂點連結》T恤 - Music · Connect T-Shirt</option>
                         </select>
                     </div>
@@ -821,21 +821,21 @@ const initPOS = () => {
         { id: 2, category: 'Socks', name: 'Socks (Grey)', style: 'Grey', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
         { id: 3, category: 'Socks', name: 'Socks (Black)', style: 'Black', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
         
-        // GRAPHIC T-SHIRT (BLACK) - $150 (Item 3, 6 individual size boxes)
-        { id: 201, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 202, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 203, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
-        { id: 204, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 205, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 206, category: 'T-Shirts', name: 'Graphic T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        //  T-SHIRT (BLACK) - $150 (Item 3, 6 individual size boxes)
+        { id: 201, category: 'T-Shirts', name: ' T-Shirt (Black) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 202, category: 'T-Shirts', name: ' T-Shirt (Black) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 203, category: 'T-Shirts', name: ' T-Shirt (Black) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
+        { id: 204, category: 'T-Shirts', name: ' T-Shirt (Black) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 205, category: 'T-Shirts', name: ' T-Shirt (Black) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 206, category: 'T-Shirts', name: ' T-Shirt (Black) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
 
-        // GRAPHIC T-SHIRT (WHITE) - $150 (Item 4, 6 individual size boxes)
-        { id: 301, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 302, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 303, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
-        { id: 304, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
-        { id: 305, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
-        { id: 306, category: 'T-Shirts', name: 'Graphic T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        //  T-SHIRT (WHITE) - $150 (Item 4, 6 individual size boxes)
+        { id: 301, category: 'T-Shirts', name: ' T-Shirt (White) - S', style: 'Size S', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 302, category: 'T-Shirts', name: ' T-Shirt (White) - M', style: 'Size M', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 303, category: 'T-Shirts', name: ' T-Shirt (White) - L', style: 'Size L', price: 150, cost: 0, stocks: 40, boxSize: 6, image: '' },
+        { id: 304, category: 'T-Shirts', name: ' T-Shirt (White) - XL', style: 'Size XL', price: 150, cost: 0, stocks: 35, boxSize: 6, image: '' },
+        { id: 305, category: 'T-Shirts', name: ' T-Shirt (White) - 2XL', style: 'Size 2XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
+        { id: 306, category: 'T-Shirts', name: ' T-Shirt (White) - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 30, boxSize: 6, image: '' },
 
         // MUSIC · CONNECT T-SHIRT - $150 (Item 2, 6 individual size boxes)
         { id: 101, category: 'T-Shirts', name: 'Music · Connect T-Shirt - S', style: 'Size S', price: 150, cost: 0, stocks: 45, boxSize: 6, image: '' },
@@ -846,7 +846,7 @@ const initPOS = () => {
         { id: 106, category: 'T-Shirts', name: 'Music · Connect T-Shirt - 3XL', style: 'Size 3XL', price: 150, cost: 0, stocks: 45, boxSize: 6, image: '' },
 
         // MERCHANDISE (Tote with Keychain $150, Keychain $20, Velcro Patch $40)
-        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 0, stocks: 200, boxSize: 1, image: '' },
+        { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 0, stocks: 200, boxSize: 3, image: '' },
         { id: 7, category: 'Merchandise', name: 'Keychain (鎖匙扣)', style: 'Trombone Keychain', price: 20, cost: 0, stocks: 300, boxSize: 3, image: '' },
         { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: 0, stocks: 300, boxSize: 3, image: '' }
     ];
@@ -955,7 +955,7 @@ const initPOS = () => {
             const bundleForm = ref({ name: '', price: 0, desc: '', requiresSocks: 0, sockColors: ['White', 'Grey', 'Black'], requiresShirt: 0, components: [] });
             const customizingBundle = ref(null);
             const bundleOptions = ref({
-                shirtStyle: 'Graphic T-Shirt (Black)',
+                shirtStyle: ' T-Shirt (Black)',
                 shirtSize: 'L'
             });
 
@@ -1387,7 +1387,7 @@ const initPOS = () => {
             const openBundleCustomizer = (bundle) => {
                 customizingBundle.value = bundle;
                 bundleOptions.value = {
-                    shirtStyle: 'Graphic T-Shirt (Black)',
+                    shirtStyle: ' T-Shirt (Black)',
                     shirtSize: 'L'
                 };
             };
