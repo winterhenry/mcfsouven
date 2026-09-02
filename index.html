@@ -218,7 +218,7 @@
                     <div class="bg-gradient-to-br from-amber-500 to-indigo-900 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
                         <div>
                             <h2 class="text-lg font-black uppercase tracking-wider">Bundle Packages & Deals</h2>
-                            <p class="text-xs text-amber-100 opacity-90 mt-1">Select any bundle to customize t-shirt designs, bag choice, and options.</p>
+                            <p class="text-xs text-amber-100 opacity-90 mt-1">Select any bundle to customize t-shirt designs, sizes, and options.</p>
                         </div>
                         <span class="text-4xl">🎁</span>
                     </div>
@@ -246,7 +246,7 @@
                 </div>
 
                 <!-- ========================================== -->
-                <!-- VIEW 3: INVENTORY (ITEMS & BUNDLES CONFIG) -->
+                <!-- VIEW 3: INVENTORY (ITEMS & BOX SIZES 1-7) -->
                 <!-- ========================================== -->
                 <div v-if="view === 'stk'" class="space-y-6">
                     <!-- Products Table -->
@@ -353,7 +353,7 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-black uppercase text-slate-400 block mb-1">Description</label>
-                                <input v-model="bundleForm.desc" placeholder="e.g. T-Shirt + Bag Choice + Patch + Socks Set" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
+                                <input v-model="bundleForm.desc" placeholder="e.g. T-Shirt + Tote Bag with Keychain + Patch + Socks Set" class="w-full border p-2.5 rounded-xl text-xs bg-slate-50">
                             </div>
                         </div>
 
@@ -753,25 +753,6 @@
                     </span>
                 </div>
 
-                <!-- Bag Choice for Everything Bundle ($380 Unchanged) -->
-                <div v-if="customizingBundle.id === 'b1' || (customizingBundle.name && customizingBundle.name.includes('福袋'))" class="bg-slate-50 p-4 rounded-2xl border space-y-2">
-                    <p class="text-xs font-black uppercase text-indigo-950">Select Bag Choice ($380 Price Unchanged):</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button @click="bundleOptions.bagChoice = 'combo'"
-                            :class="bundleOptions.bagChoice === 'combo' ? 'bg-indigo-600 text-white font-bold' : 'bg-white border text-slate-700'"
-                            class="p-2.5 rounded-xl text-xs transition text-left">
-                            <div class="font-black">帆布袋連鎖匙扣</div>
-                            <div class="text-[9px] opacity-80">Tote Bag with Keychain</div>
-                        </button>
-                        <button @click="bundleOptions.bagChoice = 'single'"
-                            :class="bundleOptions.bagChoice === 'single' ? 'bg-indigo-600 text-white font-bold' : 'bg-white border text-slate-700'"
-                            class="p-2.5 rounded-xl text-xs transition text-left">
-                            <div class="font-black">純帆布袋 (Tote Only)</div>
-                            <div class="text-[9px] opacity-80">Tote Bag without Keychain</div>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- T-Shirt Style & Size Choices -->
                 <div v-if="customizingBundle.requiresShirt > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-3">
                     <p class="text-xs font-black uppercase text-indigo-950">Select T-Shirt Options ($150 Standard):</p>
@@ -800,7 +781,7 @@
                     </div>
                 </div>
 
-                <!-- Included Fixed Products (Patches, etc.) -->
+                <!-- Included Fixed Products (Tote Bag with Keychain, Patches, etc.) -->
                 <div v-if="customizingBundle.components && customizingBundle.components.length > 0" class="bg-slate-50 p-4 rounded-2xl border space-y-1.5">
                     <p class="text-[10px] font-black uppercase text-indigo-950">Included Merchandise:</p>
                     <div class="space-y-1">
@@ -833,7 +814,7 @@
 const initPOS = () => {
     const { createApp, ref, computed, watch, onMounted } = Vue;
 
-    // EXACT INITIAL ITEMS (SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150, TOTE ONLY $120)
+    // EXACT INITIAL ITEMS (NO STANDALONE BAG, SOCKS $50, PATCH $40, KEYCHAIN $20, TOTE+KEYCHAIN $150)
     const INITIAL_ITEMS = [
         // SOCKS (Item 5: $50 each pair)
         { id: 1, category: 'Socks', name: 'Socks (White)', style: 'White', price: 50, cost: 0, stocks: 100, boxSize: 3, image: '' },
@@ -866,23 +847,23 @@ const initPOS = () => {
 
         // MERCHANDISE
         { id: 6, category: 'Merchandise', name: 'Tote Bag with Keychain (帆布袋連鎖匙扣)', style: 'Tote + Keychain Combo', price: 150, cost: 0, stocks: 200, boxSize: 3, image: '' },
-        { id: 10, category: 'Merchandise', name: 'Tote Bag (帆布袋)', style: 'Black Graphic', price: 120, cost: 0, stocks: 200, boxSize: 1, image: '' },
         { id: 7, category: 'Merchandise', name: 'Keychain (鎖匙扣)', style: 'Trombone Keychain', price: 20, cost: 0, stocks: 300, boxSize: 3, image: '' },
         { id: 8, category: 'Merchandise', name: 'Velcro Patch (刺繡魔術貼)', style: 'Cart/Tuba Patch', price: 40, cost: 0, stocks: 300, boxSize: 3, image: '' }
     ];
 
-    // INITIAL BUNDLES (Everything Bundle $380, Socks Set $120)
+    // INITIAL BUNDLES (EVERYTHING BUNDLE $380 INCLUDES TOTE+KEYCHAIN ID 6 DIRECTLY)
     const INITIAL_BUNDLES = [
         { 
             id: 'b1', 
             name: '福袋 (Everything Bundle)', 
             price: 380, 
-            desc: 'T-Shirt (any design) + Bag Choice (Combo or Tote) + Velcro Patch + Socks (Set of 3 colors: White, Grey, Black)',
+            desc: 'T-Shirt (any design) + Tote Bag with Keychain + Velcro Patch + Socks (Set of 3 colors: White, Grey, Black)',
             requiresSocks: 3,
             sockColors: ['White', 'Grey', 'Black'],
             requiresShirt: 1,
             components: [
-                { itemId: 8, qty: 1 } // Velcro Patch ($40)
+                { itemId: 6, qty: 1 }, // Tote Bag with Keychain ($150)
+                { itemId: 8, qty: 1 }  // Velcro Patch ($40)
             ]
         },
         { 
@@ -899,9 +880,9 @@ const initPOS = () => {
 
     // Storage Migration with Non-Destructive Fallbacks
     const migrateAndLoadData = () => {
-        const itemKeys = ['mc_pos_app_items_v45', 'mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40', 'mc_pos_items_v38', 'mc_pos_items_v37'];
-        const salesKeys = ['mc_pos_app_sales_v45', 'mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40', 'mc_pos_sales_v38', 'mc_pos_sales_v37'];
-        const bundleKeys = ['mc_pos_app_bundles_v45', 'mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40', 'mc_pos_bundles_v38', 'mc_pos_bundles_v37'];
+        const itemKeys = ['mc_pos_app_items_v46', 'mc_pos_app_items_v45', 'mc_pos_app_items_v41', 'mc_pos_app_items', 'mc_pos_items_v40'];
+        const salesKeys = ['mc_pos_app_sales_v46', 'mc_pos_app_sales_v45', 'mc_pos_app_sales_v41', 'mc_pos_app_sales', 'mc_pos_sales_v40'];
+        const bundleKeys = ['mc_pos_app_bundles_v46', 'mc_pos_app_bundles_v45', 'mc_pos_app_bundles_v41', 'mc_pos_app_bundles', 'mc_pos_bundles_v40'];
 
         let loadedItems = null;
         for (let k of itemKeys) {
@@ -910,7 +891,8 @@ const initPOS = () => {
                 if (d) {
                     const parsed = JSON.parse(d);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        loadedItems = parsed;
+                        // Remove old standalone bag if present
+                        loadedItems = parsed.filter(i => i.id !== 10 && !i.name.includes('帆布袋)'));
                         break;
                     }
                 }
@@ -946,7 +928,7 @@ const initPOS = () => {
         }
 
         return {
-            items: loadedItems || [...INITIAL_ITEMS],
+            items: (loadedItems && loadedItems.length > 0) ? loadedItems : [...INITIAL_ITEMS],
             sales: loadedSales || [],
             bundles: (loadedBundles && loadedBundles.length > 0) ? loadedBundles : [...INITIAL_BUNDLES]
         };
@@ -974,7 +956,6 @@ const initPOS = () => {
             const bundleForm = ref({ name: '', price: 0, desc: '', requiresSocks: 0, sockColors: ['White', 'Grey', 'Black'], requiresShirt: 0, components: [] });
             const customizingBundle = ref(null);
             const bundleOptions = ref({
-                bagChoice: 'combo',
                 shirtStyle: 'Graphic T-Shirt (Black)',
                 shirtSize: 'L'
             });
@@ -982,9 +963,9 @@ const initPOS = () => {
             // Master Storage Sync
             watch([items, sales, bundles], () => {
                 try {
-                    localStorage.setItem('mc_pos_app_items_v45', JSON.stringify(items.value));
-                    localStorage.setItem('mc_pos_app_sales_v45', JSON.stringify(sales.value));
-                    localStorage.setItem('mc_pos_app_bundles_v45', JSON.stringify(bundles.value));
+                    localStorage.setItem('mc_pos_app_items_v46', JSON.stringify(items.value));
+                    localStorage.setItem('mc_pos_app_sales_v46', JSON.stringify(sales.value));
+                    localStorage.setItem('mc_pos_app_bundles_v46', JSON.stringify(bundles.value));
                 } catch(e) {}
             }, { deep: true });
 
@@ -992,10 +973,10 @@ const initPOS = () => {
             // SMART NON-DESTRUCTIVE EVENT-DRIVEN SYNC ENGINE
             // ============================================================
             const deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
-            const syncRoom = 'music_connect_pos_live_sync_room_v45';
+            const syncRoom = 'music_connect_pos_live_sync_room_v46';
             let mqttClient = null;
 
-            // Merges sales by ID union (prevents overwriting concurrent sales)
+            // Merges sales by ID union
             const mergeSales = (incomingSales) => {
                 if (!Array.isArray(incomingSales)) return;
                 const map = new Map(sales.value.map(s => [s.id, s]));
@@ -1036,7 +1017,7 @@ const initPOS = () => {
                 // Local Tab Broadcast
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel_v45');
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v46');
                         bc.postMessage(payload);
                     } catch(e) {}
                 }
@@ -1049,7 +1030,7 @@ const initPOS = () => {
                         message.qos = 1;
                         mqttClient.send(message);
 
-                        // Also publish full retained state so future joiners get current data
+                        // Also publish full retained state for future joiners
                         const stateMsg = new Paho.MQTT.Message(JSON.stringify({
                             senderId: deviceId,
                             action: 'STATE_RESPONSE',
@@ -1072,7 +1053,6 @@ const initPOS = () => {
                     case 'NEW_SALE':
                         if (data.sale && !sales.value.find(s => s.id === data.sale.id)) {
                             sales.value.unshift(data.sale);
-                            // Apply stock deductions
                             if (data.deductions && Array.isArray(data.deductions)) {
                                 data.deductions.forEach(d => {
                                     const inv = items.value.find(x => x.id === d.itemId);
@@ -1085,7 +1065,6 @@ const initPOS = () => {
                     case 'DELETE_SALE':
                         if (data.saleId) {
                             sales.value = sales.value.filter(s => s.id !== data.saleId);
-                            // Restore stocks
                             if (data.restorations && Array.isArray(data.restorations)) {
                                 data.restorations.forEach(r => {
                                     const inv = items.value.find(x => x.id === r.itemId);
@@ -1113,7 +1092,6 @@ const initPOS = () => {
                         break;
 
                     case 'REQUEST_STATE':
-                        // Online peer asked for state -> respond immediately
                         broadcastEvent('STATE_RESPONSE', {
                             targetId: data.senderId,
                             items: items.value,
@@ -1123,7 +1101,6 @@ const initPOS = () => {
                         break;
 
                     case 'STATE_RESPONSE':
-                        // Received state from peer or retained cache
                         if (data.items) mergeItems(data.items);
                         if (data.sales) mergeSales(data.sales);
                         if (data.bundles && Array.isArray(data.bundles)) bundles.value = data.bundles;
@@ -1139,15 +1116,13 @@ const initPOS = () => {
             };
 
             const setupLiveSync = () => {
-                // Local Tab Channel
                 if (window.BroadcastChannel) {
                     try {
-                        const bc = new BroadcastChannel('mc_pos_live_channel_v45');
+                        const bc = new BroadcastChannel('mc_pos_live_channel_v46');
                         bc.onmessage = (ev) => handleIncomingPayload(ev.data);
                     } catch(e) {}
                 }
 
-                // Multi-Device MQTT WebSockets
                 if (typeof Paho !== 'undefined' && Paho.MQTT) {
                     try {
                         const client = new Paho.MQTT.Client('broker.emqx.io', 8084, 'pos_' + deviceId);
@@ -1172,7 +1147,6 @@ const initPOS = () => {
                                 onSuccess: () => {
                                     syncStatus.value = 'Live Synced';
                                     client.subscribe(`mc_pos_sync/${syncRoom}/#`);
-                                    // Send handshake request to online peers
                                     broadcastEvent('REQUEST_STATE');
                                 },
                                 onFailure: () => {
@@ -1348,7 +1322,6 @@ const initPOS = () => {
 
                     let maxCount = Infinity;
 
-                    // Match socks by specific required colors
                     if (b.requiresSocks > 0) {
                         if (b.sockColors && b.sockColors.length > 0) {
                             if (b.sockColors.includes('White')) maxCount = Math.min(maxCount, poolWhiteSocks);
@@ -1363,12 +1336,7 @@ const initPOS = () => {
                         maxCount = Math.min(maxCount, Math.floor(poolShirts / b.requiresShirt));
                     }
 
-                    // For Everything Bundle, either Bag combo (ID 6) OR Bag single (ID 10) qualifies!
-                    if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
-                        const totalBagsAvailable = (poolItems[6] || 0) + (poolItems[10] || 0);
-                        const patchAvailable = poolItems[8] || 0;
-                        maxCount = Math.min(maxCount, totalBagsAvailable, patchAvailable);
-                    } else if (b.components && b.components.length > 0) {
+                    if (b.components && b.components.length > 0) {
                         b.components.forEach(cp => {
                             const available = poolItems[cp.itemId] || 0;
                             maxCount = Math.min(maxCount, Math.floor(available / (Number(cp.qty) || 1)));
@@ -1397,14 +1365,7 @@ const initPOS = () => {
 
                         if (b.requiresShirt > 0) poolShirts -= maxCount * b.requiresShirt;
 
-                        if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
-                            let bagsNeeded = maxCount;
-                            const take6 = Math.min(poolItems[6] || 0, bagsNeeded);
-                            if (poolItems[6]) poolItems[6] -= take6;
-                            bagsNeeded -= take6;
-                            if (bagsNeeded > 0 && poolItems[10]) poolItems[10] -= bagsNeeded;
-                            if (poolItems[8]) poolItems[8] -= maxCount; // Patch
-                        } else if (b.components && b.components.length > 0) {
+                        if (b.components && b.components.length > 0) {
                             b.components.forEach(cp => {
                                 poolItems[cp.itemId] = (poolItems[cp.itemId] || 0) - (maxCount * (Number(cp.qty) || 1));
                             });
@@ -1513,7 +1474,6 @@ const initPOS = () => {
             const openBundleCustomizer = (bundle) => {
                 customizingBundle.value = bundle;
                 bundleOptions.value = {
-                    bagChoice: 'combo',
                     shirtStyle: 'Graphic T-Shirt (Black)',
                     shirtSize: 'L'
                 };
@@ -1558,18 +1518,7 @@ const initPOS = () => {
                     descParts.push(`Shirt: ${styleKey} (${sizeKey})`);
                 }
 
-                // 3. Bag Selection for Everything Bundle
-                if (b.id === 'b1' || (b.name && b.name.includes('福袋'))) {
-                    if (bundleOptions.value.bagChoice === 'single') {
-                        components.push({ itemId: 10, qty: 1 }); // Tote Bag only ($120)
-                        descParts.push('Bag: 純帆布袋');
-                    } else {
-                        components.push({ itemId: 6, qty: 1 }); // Tote Bag with Keychain ($150)
-                        descParts.push('Bag: 帆布袋連鎖匙扣');
-                    }
-                }
-
-                // 4. Linked Merchandise Items
+                // 3. Linked Merchandise Items
                 if (b.components && b.components.length > 0) {
                     b.components.forEach(comp => {
                         components.push({ itemId: comp.itemId, qty: comp.qty });
